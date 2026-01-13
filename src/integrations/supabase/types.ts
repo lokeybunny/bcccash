@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          last_email_sent_at: string | null
           public_key: string
           secret_key: Json | null
           updated_at: string
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          last_email_sent_at?: string | null
           public_key: string
           secret_key?: Json | null
           updated_at?: string
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          last_email_sent_at?: string | null
           public_key?: string
           secret_key?: Json | null
           updated_at?: string

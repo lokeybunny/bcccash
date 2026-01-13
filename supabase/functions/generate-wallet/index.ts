@@ -219,10 +219,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully to:", email);
 
-    // Update wallet as confirmed (email sent)
+    // Update wallet as confirmed (email sent) and set timestamp for rate limiting
     await supabase
       .from("wallets")
-      .update({ confirmed: true })
+      .update({ 
+        confirmed: true,
+        last_email_sent_at: new Date().toISOString()
+      })
       .eq("email", email);
 
     return new Response(
