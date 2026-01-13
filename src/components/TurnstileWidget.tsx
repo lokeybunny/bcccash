@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useTheme } from "next-themes";
 
 // Turnstile Site Key - get from Cloudflare dashboard
 const TURNSTILE_SITE_KEY = "0x4AAAAAABi8Rl0_c9fvqMhD";
@@ -30,74 +31,101 @@ interface TurnstileWidgetProps {
   onError?: () => void;
 }
 
-export const TurnstileWidget = ({
-  onVerify,
-  onExpire,
-  onError,
-}: TurnstileWidgetProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
-  const scriptLoadedRef = useRef(false);
+export interface TurnstileWidgetRef {
+  reset: () => void;
+}
 
-  const renderWidget = useCallback(() => {
-    if (!containerRef.current || !window.turnstile) return;
+export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
+  ({ onVerify, onExpire, onError }, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const widgetIdRef = useRef<string | null>(null);
+    const scriptLoadedRef = useRef(false);
+    const { resolvedTheme } = useTheme();
 
-    // Remove existing widget if any
-    if (widgetIdRef.current) {
-      window.turnstile.remove(widgetIdRef.current);
-      widgetIdRef.current = null;
-    }
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        if (widgetIdRef.current && window.turnstile) {
+          window.turnstile.reset(widgetIdRef.current);
+        }
+      },
+    }));
 
-    widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: TURNSTILE_SITE_KEY,
-      callback: onVerify,
-      "expired-callback": onExpire,
-      "error-callback": onError,
-      theme: "dark",
-      size: "normal",
-    });
-  }, [onVerify, onExpire, onError]);
+    const renderWidget = useCallback(() => {
+      if (!containerRef.current || !window.turnstile) return;
 
-  useEffect(() => {
-    // If Turnstile is already loaded, render immediately
-    if (window.turnstile) {
-      renderWidget();
-      return;
-    }
-
-    // Only load script once
-    if (!scriptLoadedRef.current) {
-      scriptLoadedRef.current = true;
-
-      const script = document.createElement("script");
-      script.src =
-        "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
-      script.async = true;
-      script.defer = true;
-
-      window.onTurnstileLoad = () => {
-        renderWidget();
-      };
-
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
+      // Remove existing widget if any
+      if (widgetIdRef.current) {
+        try {
+          window.turnstile.remove(widgetIdRef.current);
+        } catch (e) {
+          // Widget may already be removed
+        }
         widgetIdRef.current = null;
       }
-    };
-  }, [renderWidget]);
 
-  return (
-    <div
-      ref={containerRef}
-      className="flex justify-center"
-      style={{ minHeight: "65px" }}
-    />
-  );
-};
+      try {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: onVerify,
+          "expired-callback": onExpire,
+          "error-callback": onError,
+          theme: resolvedTheme === "dark" ? "dark" : "light",
+          size: "normal",
+        });
+      } catch (e) {
+        console.error("Failed to render Turnstile widget:", e);
+        // Call onError to allow fallback behavior
+        onError?.();
+      }
+    }, [onVerify, onExpire, onError, resolvedTheme]);
+
+    useEffect(() => {
+      // If Turnstile is already loaded, render immediately
+      if (window.turnstile) {
+        renderWidget();
+        return;
+      }
+
+      // Only load script once
+      if (!scriptLoadedRef.current) {
+        scriptLoadedRef.current = true;
+
+        const script = document.createElement("script");
+        script.src =
+          "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
+        script.async = true;
+        script.defer = true;
+
+        window.onTurnstileLoad = () => {
+          renderWidget();
+        };
+
+        document.head.appendChild(script);
+      }
+
+      return () => {
+        if (widgetIdRef.current && window.turnstile) {
+          try {
+            window.turnstile.remove(widgetIdRef.current);
+          } catch (e) {
+            // Widget may already be removed
+          }
+          widgetIdRef.current = null;
+        }
+      };
+    }, [renderWidget]);
+
+    return (
+      <div
+        ref={containerRef}
+        className="flex justify-center"
+        style={{ minHeight: "65px" }}
+      />
+    );
+  }
+);
+
+TurnstileWidget.displayName = "TurnstileWidget";
 
 export const resetTurnstile = () => {
   // This is a utility to reset all turnstile widgets on the page
