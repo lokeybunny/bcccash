@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -10,7 +10,9 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,12 +40,13 @@ export const WalletGenerator = () => {
         return;
       }
 
-      // Handle response with error field (could be 409)
+      // Handle response with error field (could be 409 - existing wallet)
       if (data?.error) {
         if (data.publicKey) {
           toast.info("A wallet already exists for this email");
           setGeneratedAddress(data.publicKey);
           setIsSuccess(true);
+          setIsExistingWallet(true);
         } else {
           toast.error(data.error);
         }
@@ -59,6 +62,7 @@ export const WalletGenerator = () => {
               toast.info("A wallet already exists for this email");
               setGeneratedAddress(errorData.publicKey);
               setIsSuccess(true);
+              setIsExistingWallet(true);
               return;
             }
             toast.error(errorData?.error || "An error occurred");
@@ -77,9 +81,31 @@ export const WalletGenerator = () => {
     }
   };
 
+  const handleResendEmail = async () => {
+    const client = getBackendClient();
+    setIsResending(true);
+
+    try {
+      const { data, error } = await client.functions.invoke("resend-wallet-email", {
+        body: { email },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("Wallet credentials resent! Check your email.");
+    } catch (error: any) {
+      console.error("Error resending email:", error);
+      toast.error(error?.message || "Failed to resend email");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const resetForm = () => {
     setEmail("");
     setIsSuccess(false);
+    setIsExistingWallet(false);
     setGeneratedAddress("");
   };
 
@@ -146,8 +172,12 @@ export const WalletGenerator = () => {
                 <Check className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="font-medium text-green-400">Wallet Created Successfully!</p>
-                <p className="text-sm text-muted-foreground">Private key sent to {email}</p>
+                <p className="font-medium text-green-400">
+                  {isExistingWallet ? "Wallet Found!" : "Wallet Created Successfully!"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {isExistingWallet ? `Wallet exists for ${email}` : `Private key sent to ${email}`}
+                </p>
               </div>
             </div>
             
@@ -155,6 +185,27 @@ export const WalletGenerator = () => {
               <p className="text-xs text-muted-foreground mb-1">Public Address</p>
               <p className="font-mono text-sm text-foreground break-all">{generatedAddress}</p>
             </div>
+
+            {isExistingWallet && (
+              <Button 
+                variant="glass" 
+                className="w-full border border-primary/30"
+                onClick={handleResendEmail}
+                disabled={isResending}
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    Resend Private Key to Email
+                  </>
+                )}
+              </Button>
+            )}
 
             <Button variant="outline" className="w-full" onClick={resetForm}>
               Generate Another Wallet

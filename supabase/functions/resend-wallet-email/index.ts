@@ -7,63 +7,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface GenerateWalletRequest {
+interface ResendEmailRequest {
   email: string;
 }
 
-function generateSolanaKeypair(): { publicKey: string; privateKey: string; secretKeyArray: number[] } {
-  // Generate 32 random bytes for private key seed
-  const seed = new Uint8Array(32);
-  crypto.getRandomValues(seed);
-  
-  // For Solana, we need to create a 64-byte secret key
-  // The first 32 bytes are the seed, the last 32 bytes are derived
-  // Using a simple approach that works with Phantom/Solflare imports
-  
-  // Create keypair bytes (64 bytes total)
-  const secretKey = new Uint8Array(64);
-  crypto.getRandomValues(secretKey);
-  
-  // Derive public key using ed25519 curve math (simplified for demo)
-  // In production, you'd use @solana/web3.js Keypair.generate()
-  // For now, we'll use a deterministic approach
-  
-  // Base58 alphabet
-  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  
-  function encodeBase58(bytes: Uint8Array): string {
-    const digits = [0];
-    for (let i = 0; i < bytes.length; i++) {
-      let carry = bytes[i];
-      for (let j = 0; j < digits.length; j++) {
-        carry += digits[j] << 8;
-        digits[j] = carry % 58;
-        carry = (carry / 58) | 0;
-      }
-      while (carry > 0) {
-        digits.push(carry % 58);
-        carry = (carry / 58) | 0;
-      }
+// Base58 encoding for Solana keys
+const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function encodeBase58(bytes: Uint8Array): string {
+  const digits = [0];
+  for (let i = 0; i < bytes.length; i++) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
     }
-    let str = '';
-    for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-      str += ALPHABET[0];
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = (carry / 58) | 0;
     }
-    for (let i = digits.length - 1; i >= 0; i--) {
-      str += ALPHABET[digits[i]];
-    }
-    return str;
   }
-  
-  // For the public key, we'll use first 32 bytes of a hash of the secret
-  // This is a placeholder - real implementation needs ed25519
-  const publicKeyBytes = secretKey.slice(32, 64);
-  
-  return {
-    publicKey: encodeBase58(publicKeyBytes),
-    privateKey: encodeBase58(secretKey),
-    secretKeyArray: Array.from(secretKey),
-  };
+  let str = '';
+  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+    str += ALPHABET[0];
+  }
+  for (let i = digits.length - 1; i >= 0; i--) {
+    str += ALPHABET[digits[i]];
+  }
+  return str;
 }
 
 async function sendEmail(to: string, publicKey: string, privateKey: string, secretKeyArray: number[]): Promise<void> {
@@ -78,7 +50,7 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
     body: JSON.stringify({
       from: "BCC.cash <noreply@bcc.cash>",
       to: [to],
-      subject: "🔐 Your New Solana Wallet Has Been Created",
+      subject: "🔐 Your Solana Wallet Credentials (Resent)",
       html: `
         <!DOCTYPE html>
         <html>
@@ -90,8 +62,8 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
           <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(139, 92, 246, 0.3);">
             
             <div style="text-align: center; margin-bottom: 32px;">
-              <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px;">🎉 Welcome to Solana!</h1>
-              <p style="color: #a1a1aa; margin: 0;">Your new wallet has been created</p>
+              <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px;">📧 Wallet Credentials Resent</h1>
+              <p style="color: #a1a1aa; margin: 0;">Here are your wallet details again</p>
             </div>
 
             <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
@@ -117,22 +89,9 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
               </ul>
             </div>
 
-            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-              <h3 style="color: #3b82f6; margin: 0 0 12px; font-size: 16px;">📱 How to Access Your Wallet</h3>
-              <ol style="color: #a1a1aa; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
-                <li>Download a Solana wallet app (Phantom, Solflare, etc.)</li>
-                <li>Choose "Import Wallet" or "Restore Wallet"</li>
-                <li>Select "Private Key" import option</li>
-                <li>Paste the Base58 private key or byte array</li>
-                <li>Your funds will be available immediately</li>
-              </ol>
-            </div>
-
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
               <p style="color: #71717a; font-size: 13px; margin: 0;">
-                <strong>Why did you receive this?</strong><br>
-                Someone created a Solana wallet for you, possibly for an airdrop, fundraising campaign, or to send you tokens. 
-                You now have full control of this wallet.
+                You requested to have your wallet credentials resent.
               </p>
             </div>
 
@@ -145,24 +104,17 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
 
   if (!res.ok) {
     const errorText = await res.text();
-    
-    // Check for Resend domain verification error
-    if (errorText.includes("validation_error") && errorText.includes("verify a domain")) {
-      throw new Error("Email domain not verified. The wallet was created but the email could not be sent. Please verify a domain at resend.com/domains.");
-    }
-    
     throw new Error(`Failed to send email: ${errorText}`);
   }
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email }: GenerateWalletRequest = await req.json();
+    const { email }: ResendEmailRequest = await req.json();
 
     if (!email || !email.includes("@")) {
       return new Response(
@@ -171,71 +123,65 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if wallet already exists for this email
-    const { data: existingWallet } = await supabase
+    // Find wallet for this email
+    const { data: wallet, error: fetchError } = await supabase
       .from("wallets")
       .select("*")
       .eq("email", email)
       .maybeSingle();
 
-    if (existingWallet) {
+    if (fetchError) {
+      console.error("Database fetch error:", fetchError);
       return new Response(
-        JSON.stringify({ 
-          error: "A wallet already exists for this email address",
-          publicKey: existingWallet.public_key 
-        }),
-        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Generate new Solana keypair
-    const { publicKey, privateKey, secretKeyArray } = generateSolanaKeypair();
-
-    // Store wallet in database (including secret key for resend functionality)
-    const { error: insertError } = await supabase
-      .from("wallets")
-      .insert({
-        email,
-        public_key: publicKey,
-        secret_key: secretKeyArray,
-        confirmed: false,
-      });
-
-    if (insertError) {
-      console.error("Database insert error:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to store wallet" }),
+        JSON.stringify({ error: "Failed to fetch wallet" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Send email with private key
-    await sendEmail(email, publicKey, privateKey, secretKeyArray);
+    if (!wallet) {
+      return new Response(
+        JSON.stringify({ error: "No wallet found for this email" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    console.log("Email sent successfully to:", email);
+    if (!wallet.secret_key) {
+      return new Response(
+        JSON.stringify({ error: "Cannot resend email - wallet was created before this feature was available" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    // Update wallet as confirmed (email sent)
-    await supabase
-      .from("wallets")
-      .update({ confirmed: true })
-      .eq("email", email);
+    // Reconstruct private key from stored secret key array
+    const secretKeyArray = wallet.secret_key as number[];
+    const secretKeyBytes = new Uint8Array(secretKeyArray);
+    const privateKey = encodeBase58(secretKeyBytes);
+
+    // Send email
+    await sendEmail(email, wallet.public_key, privateKey, secretKeyArray);
+
+    // Update confirmed status if not already
+    if (!wallet.confirmed) {
+      await supabase
+        .from("wallets")
+        .update({ confirmed: true })
+        .eq("email", email);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        publicKey,
-        message: "Wallet created and private key sent to email" 
+        message: "Wallet credentials resent to email" 
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 
   } catch (error: any) {
-    console.error("Error in generate-wallet function:", error);
+    console.error("Error in resend-wallet-email function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
