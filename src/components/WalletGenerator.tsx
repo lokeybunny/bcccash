@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -19,8 +19,11 @@ const progressSteps: Record<ProgressStep, string> = {
   done: "Complete!",
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -28,6 +31,12 @@ export const WalletGenerator = () => {
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
+
+  const emailValidation = useMemo(() => {
+    if (!email) return { isValid: false, message: "" };
+    if (!EMAIL_REGEX.test(email)) return { isValid: false, message: "Invalid email format" };
+    return { isValid: true, message: "" };
+  }, [email]);
 
   const cooldownTimer = useCooldownTimer();
 
@@ -167,6 +176,7 @@ export const WalletGenerator = () => {
 
   const resetForm = () => {
     setEmail("");
+    setEmailTouched(false);
     setIsSuccess(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
@@ -195,17 +205,61 @@ export const WalletGenerator = () => {
 
         {!isSuccess ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="recipient@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-14 text-lg"
-                disabled={isLoading}
-              />
+            <div className="space-y-2">
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="recipient@email.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailTouched(true);
+                  }}
+                  onBlur={() => setEmailTouched(true)}
+                  className={`pl-12 pr-12 h-14 text-lg ${
+                    emailTouched && email
+                      ? emailValidation.isValid
+                        ? "border-green-500/50 focus-visible:ring-green-500/30"
+                        : "border-destructive/50 focus-visible:ring-destructive/30"
+                      : ""
+                  }`}
+                  disabled={isLoading}
+                />
+                {emailTouched && email && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    {emailValidation.isValid ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-destructive" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {emailTouched && email && !emailValidation.isValid && (
+                <p className="text-xs text-destructive pl-1">{emailValidation.message}</p>
+              )}
             </div>
+
+            <Button
+              type="submit"
+              variant="glass"
+              size="lg"
+              className="w-full border border-primary/30"
+              disabled={isLoading || !turnstileToken || !emailValidation.isValid}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating Wallet...
+                </>
+              ) : (
+                <>
+                  Create Wallet
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </Button>
 
             <TurnstileWidget
               onVerify={handleTurnstileVerify}
@@ -223,26 +277,6 @@ export const WalletGenerator = () => {
                 <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
               </motion.div>
             )}
-            
-            <Button
-              type="submit"
-              variant="glass"
-              size="lg"
-              className="w-full border border-primary/30"
-              disabled={isLoading || !turnstileToken}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating Wallet...
-                </>
-              ) : (
-                <>
-                  Create Wallet
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </Button>
           </form>
         ) : (
           <motion.div
