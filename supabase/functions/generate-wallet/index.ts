@@ -144,8 +144,14 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
   });
 
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Failed to send email: ${error}`);
+    const errorText = await res.text();
+    
+    // Check for Resend domain verification error
+    if (errorText.includes("validation_error") && errorText.includes("verify a domain")) {
+      throw new Error("Email domain not verified. The wallet was created but the email could not be sent. Please verify a domain at resend.com/domains.");
+    }
+    
+    throw new Error(`Failed to send email: ${errorText}`);
   }
 }
 
