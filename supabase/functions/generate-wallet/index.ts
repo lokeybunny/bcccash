@@ -184,12 +184,14 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     if (existingWallet) {
+      // Return 200 so the frontend can handle this as a non-fatal "wallet already exists" state
+      // (Supabase functions.invoke treats non-2xx responses as errors)
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "A wallet already exists for this email address",
-          publicKey: existingWallet.public_key 
+          publicKey: existingWallet.public_key,
         }),
-        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 

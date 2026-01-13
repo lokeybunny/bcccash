@@ -165,16 +165,19 @@ const handler = async (req: Request): Promise<Response> => {
       const now = new Date();
       const minutesSinceLastEmail = (now.getTime() - lastSent.getTime()) / (1000 * 60);
       
-      if (minutesSinceLastEmail < RATE_LIMIT_MINUTES) {
-        const remainingMinutes = Math.ceil(RATE_LIMIT_MINUTES - minutesSinceLastEmail);
-        return new Response(
-          JSON.stringify({ 
-            error: `Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before requesting another email`,
-            retryAfter: remainingMinutes
-          }),
-          { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
+        if (minutesSinceLastEmail < RATE_LIMIT_MINUTES) {
+          const remainingMinutes = Math.ceil(RATE_LIMIT_MINUTES - minutesSinceLastEmail);
+
+          // Return 200 so the frontend can show the remaining cooldown without throwing
+          // (functions.invoke treats non-2xx as errors)
+          return new Response(
+            JSON.stringify({
+              error: `Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before requesting another email`,
+              retryAfter: remainingMinutes,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
     }
 
     // Reconstruct private key from stored secret key array
