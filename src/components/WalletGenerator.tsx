@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useCooldownTimer } from "@/hooks/useCooldownTimer";
 
-type ProgressStep = "idle" | "verifying" | "generating" | "sending" | "done";
+type ProgressStep = "idle" | "generating" | "sending" | "done";
 
 const progressSteps: Record<ProgressStep, string> = {
   idle: "",
-  verifying: "Verifying CAPTCHA...",
   generating: "Generating wallet keypair...",
   sending: "Sending email with credentials...",
   done: "Complete!",
@@ -29,7 +27,6 @@ export const WalletGenerator = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
 
   const emailValidation = useMemo(() => {
@@ -39,14 +36,6 @@ export const WalletGenerator = () => {
   }, [email]);
 
   const cooldownTimer = useCooldownTimer();
-
-  const handleTurnstileVerify = useCallback((token: string) => {
-    setTurnstileToken(token);
-  }, []);
-
-  const handleTurnstileExpire = useCallback(() => {
-    setTurnstileToken(null);
-  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -61,26 +50,25 @@ export const WalletGenerator = () => {
       return;
     }
 
-    if (!turnstileToken) {
-      toast.error("Please complete the CAPTCHA verification");
-      return;
-    }
-
     const client = getBackendClient();
 
     setIsLoading(true);
-    setProgressStep("verifying");
+    setProgressStep("generating");
 
     try {
       // Simulate brief delay for progress visibility
       await new Promise(resolve => setTimeout(resolve, 300));
-      setProgressStep("generating");
-      await new Promise(resolve => setTimeout(resolve, 300));
       setProgressStep("sending");
 
       const { data, error } = await client.functions.invoke("generate-wallet", {
-        body: { email, turnstileToken },
+        body: { email },
       });
+
+      // Handle rate limiting (429)
+      if (data?.retryAfter) {
+        toast.error(data.error || `Too many requests. Please try again in ${data.retryAfter} minutes.`);
+        return;
+      }
 
       // Handle successful response with data
       if (data?.publicKey && !data?.error) {
@@ -132,23 +120,17 @@ export const WalletGenerator = () => {
     } finally {
       setIsLoading(false);
       setProgressStep("idle");
-      setTurnstileToken(null);
     }
   };
 
   const handleResendEmail = async () => {
-    if (!turnstileToken) {
-      toast.error("Please complete the CAPTCHA verification");
-      return;
-    }
-
     const client = getBackendClient();
     setIsResending(true);
     setProgressStep("sending");
 
     try {
       const { data, error } = await client.functions.invoke("resend-wallet-email", {
-        body: { email, turnstileToken },
+        body: { email },
       });
 
       if (error) throw error;
@@ -170,7 +152,6 @@ export const WalletGenerator = () => {
     } finally {
       setIsResending(false);
       setProgressStep("idle");
-      setTurnstileToken(null);
     }
   };
 
@@ -180,7 +161,6 @@ export const WalletGenerator = () => {
     setIsSuccess(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
-    setTurnstileToken(null);
     setProgressStep("idle");
     cooldownTimer.reset();
   };
@@ -246,7 +226,7 @@ export const WalletGenerator = () => {
               variant="glass"
               size="lg"
               className="w-full border border-border"
-              disabled={isLoading || !turnstileToken || !emailValidation.isValid}
+              disabled={isLoading || !emailValidation.isValid}
             >
               {isLoading ? (
                 <>
@@ -260,14 +240,6 @@ export const WalletGenerator = () => {
                 </>
               )}
             </Button>
-
-            {emailValidation.isValid && (
-              <TurnstileWidget
-                onVerify={handleTurnstileVerify}
-                onExpire={handleTurnstileExpire}
-                onError={handleTurnstileExpire}
-              />
-            )}
 
             {isLoading && progressStep !== "idle" && (
               <motion.div
@@ -318,12 +290,6 @@ export const WalletGenerator = () => {
 
             {isExistingWallet && (
               <div className="space-y-3 pt-2">
-                <TurnstileWidget
-                  onVerify={handleTurnstileVerify}
-                  onExpire={handleTurnstileExpire}
-                  onError={handleTurnstileExpire}
-                />
-
                 {isResending && progressStep !== "idle" && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -340,7 +306,7 @@ export const WalletGenerator = () => {
                   size="lg"
                   className="w-full border border-border"
                   onClick={handleResendEmail}
-                  disabled={isResending || cooldownTimer.isActive || !turnstileToken}
+                  disabled={isResending || cooldownTimer.isActive}
                 >
                   {isResending ? (
                     <>

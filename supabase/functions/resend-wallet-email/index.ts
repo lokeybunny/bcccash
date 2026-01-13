@@ -4,40 +4,60 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-forwarded-for",
 };
 
 interface ResendEmailRequest {
   email: string;
-  turnstileToken: string;
 }
 
-// Rate limit: 5 minutes between resend requests
+// Rate limit: 5 minutes between resend requests per email
 const RATE_LIMIT_MINUTES = 5;
 
-async function verifyTurnstile(token: string): Promise<boolean> {
-  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (!secret) {
-    console.error("TURNSTILE_SECRET_KEY not configured");
-    return false;
-  }
+// IP-based rate limiting: max 10 resend requests per IP per hour
+const IP_RATE_LIMIT_MAX_REQUESTS = 10;
+const IP_RATE_LIMIT_WINDOW_MINUTES = 60;
 
-  try {
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        secret,
-        response: token,
-      }),
-    });
+const ipRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-    const data = await response.json();
-    return data.success === true;
-  } catch (error) {
-    console.error("Turnstile verification error:", error);
-    return false;
+function getClientIP(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
   }
+  
+  const realIP = req.headers.get("x-real-ip");
+  if (realIP) {
+    return realIP;
+  }
+  
+  const cfIP = req.headers.get("cf-connecting-ip");
+  if (cfIP) {
+    return cfIP;
+  }
+  
+  return "unknown";
+}
+
+function checkIPRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const windowMs = IP_RATE_LIMIT_WINDOW_MINUTES * 60 * 1000;
+  
+  const record = ipRateLimitStore.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    ipRateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+    return { allowed: true };
+  }
+  
+  if (record.count >= IP_RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfterMs = record.resetTime - now;
+    const retryAfterMinutes = Math.ceil(retryAfterMs / (60 * 1000));
+    return { allowed: false, retryAfter: retryAfterMinutes };
+  }
+  
+  record.count++;
+  return { allowed: true };
 }
 
 // Base58 encoding for Solana keys
@@ -143,23 +163,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, turnstileToken }: ResendEmailRequest = await req.json();
-
-    // Verify Turnstile token
-    if (!turnstileToken) {
+    const clientIP = getClientIP(req);
+    
+    // Check IP-based rate limit
+    const ipRateLimitResult = checkIPRateLimit(clientIP);
+    if (!ipRateLimitResult.allowed) {
       return new Response(
-        JSON.stringify({ error: "CAPTCHA verification required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ 
+          error: `Too many requests. Please try again in ${ipRateLimitResult.retryAfter} minutes.`,
+          retryAfter: ipRateLimitResult.retryAfter
+        }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const isTurnstileValid = await verifyTurnstile(turnstileToken);
-    if (!isTurnstileValid) {
-      return new Response(
-        JSON.stringify({ error: "CAPTCHA verification failed. Please try again." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    const { email }: ResendEmailRequest = await req.json();
 
     if (!email || !email.includes("@")) {
       return new Response(
@@ -201,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check rate limiting
+    // Check email-based rate limiting
     if (wallet.last_email_sent_at) {
       const lastSent = new Date(wallet.last_email_sent_at);
       const now = new Date();
