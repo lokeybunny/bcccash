@@ -83,7 +83,7 @@ const Index = () => {
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-6 text-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 SolMail. Built for the Solana ecosystem.
+            © 2025 BCC.cash — Blind Carbon Copy for Solana.
           </p>
         </div>
       </footer>

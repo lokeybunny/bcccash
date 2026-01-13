@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wallet } from "lucide-react";
+import { Mail } from "lucide-react";
 
 export const Header = () => {
   return (
@@ -12,9 +12,9 @@ export const Header = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-secondary">
-            <Wallet className="w-5 h-5 text-white" />
+            <Mail className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg text-foreground">SolMail</span>
+          <span className="font-bold text-lg text-foreground">BCC.cash</span>
         </div>
         
         <nav className="hidden md:flex items-center gap-8">
