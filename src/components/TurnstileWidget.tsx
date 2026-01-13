@@ -93,7 +93,7 @@ export const TurnstileWidget = ({
   return (
     <div
       ref={containerRef}
-      className="flex justify-center my-4"
+      className="flex justify-center"
       style={{ minHeight: "65px" }}
     />
   );
