@@ -96,6 +96,12 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
       }
     }, [handleVerify, onExpire, handleError, resolvedTheme]);
 
+    const handleRetry = useCallback(() => {
+      setIsLoading(true);
+      setHasError(false);
+      // Small delay to allow state to update
+      setTimeout(() => renderWidget(), 100);
+    }, [renderWidget]);
     useEffect(() => {
       setIsLoading(true);
       setHasError(false);
@@ -154,9 +160,15 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
         {/* Error state */}
         {hasError && !isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
               <Shield className="w-4 h-4" />
               <span>Security check unavailable</span>
+              <button
+                onClick={handleRetry}
+                className="ml-2 px-3 py-1 text-xs font-medium rounded-md bg-destructive/20 hover:bg-destructive/30 transition-colors"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}
