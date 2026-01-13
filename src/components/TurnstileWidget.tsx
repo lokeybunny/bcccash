@@ -1,5 +1,7 @@
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from "react";
 import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Shield } from "lucide-react";
 
 // Turnstile Site Key - get from Cloudflare dashboard
 const TURNSTILE_SITE_KEY = "0x4AAAAAABi8Rl0_c9fvqMhD";
@@ -41,6 +43,8 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     const widgetIdRef = useRef<string | null>(null);
     const scriptLoadedRef = useRef(false);
     const { resolvedTheme } = useTheme();
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
 
     useImperativeHandle(ref, () => ({
       reset: () => {
@@ -49,6 +53,18 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
         }
       },
     }));
+
+    const handleVerify = useCallback((token: string) => {
+      setIsLoading(false);
+      setHasError(false);
+      onVerify(token);
+    }, [onVerify]);
+
+    const handleError = useCallback(() => {
+      setIsLoading(false);
+      setHasError(true);
+      onError?.();
+    }, [onError]);
 
     const renderWidget = useCallback(() => {
       if (!containerRef.current || !window.turnstile) return;
@@ -66,20 +82,24 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
       try {
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
-          callback: onVerify,
+          callback: handleVerify,
           "expired-callback": onExpire,
-          "error-callback": onError,
+          "error-callback": handleError,
           theme: resolvedTheme === "dark" ? "dark" : "light",
           size: "normal",
         });
+        // Widget rendered, but still loading until verified or error
+        setTimeout(() => setIsLoading(false), 1500); // Fallback timeout
       } catch (e) {
         console.error("Failed to render Turnstile widget:", e);
-        // Call onError to allow fallback behavior
-        onError?.();
+        handleError();
       }
-    }, [onVerify, onExpire, onError, resolvedTheme]);
+    }, [handleVerify, onExpire, handleError, resolvedTheme]);
 
     useEffect(() => {
+      setIsLoading(true);
+      setHasError(false);
+
       // If Turnstile is already loaded, render immediately
       if (window.turnstile) {
         renderWidget();
@@ -116,11 +136,37 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     }, [renderWidget]);
 
     return (
-      <div
-        ref={containerRef}
-        className="flex justify-center"
-        style={{ minHeight: "65px" }}
-      />
+      <div className="relative flex justify-center" style={{ minHeight: "65px" }}>
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border animate-pulse">
+              <Shield className="w-5 h-5 text-muted-foreground" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-2 w-32" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+        )}
+        
+        {/* Error state */}
+        {hasError && !isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+              <Shield className="w-4 h-4" />
+              <span>Security check unavailable</span>
+            </div>
+          </div>
+        )}
+
+        {/* Actual Turnstile container */}
+        <div
+          ref={containerRef}
+          className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
+        />
+      </div>
     );
   }
 );
