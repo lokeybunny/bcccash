@@ -21,10 +21,6 @@ export const WalletGenerator = () => {
     }
 
     const client = getBackendClient();
-    if (!client) {
-      toast.error("Backend is still initializing. Refresh and try again.");
-      return;
-    }
 
     setIsLoading(true);
 
