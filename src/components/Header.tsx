@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BCCLogo } from "@/components/BCCLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Header = () => {
   return (
@@ -25,6 +26,8 @@ export const Header = () => {
             How It Works
           </a>
         </nav>
+
+        <ThemeToggle />
       </div>
     </motion.header>
   );
