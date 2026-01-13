@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -8,6 +8,16 @@ import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useCooldownTimer } from "@/hooks/useCooldownTimer";
+
+type ProgressStep = "idle" | "verifying" | "generating" | "sending" | "done";
+
+const progressSteps: Record<ProgressStep, string> = {
+  idle: "",
+  verifying: "Verifying CAPTCHA...",
+  generating: "Generating wallet keypair...",
+  sending: "Sending email with credentials...",
+  done: "Complete!",
+};
 
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +27,7 @@ export const WalletGenerator = () => {
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
 
   const cooldownTimer = useCooldownTimer();
 
@@ -27,6 +38,11 @@ export const WalletGenerator = () => {
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken(null);
   }, []);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,23 +60,32 @@ export const WalletGenerator = () => {
     const client = getBackendClient();
 
     setIsLoading(true);
+    setProgressStep("verifying");
 
     try {
+      // Simulate brief delay for progress visibility
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setProgressStep("generating");
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setProgressStep("sending");
+
       const { data, error } = await client.functions.invoke("generate-wallet", {
         body: { email, turnstileToken },
       });
 
       // Handle successful response with data
       if (data?.publicKey && !data?.error) {
+        setProgressStep("done");
         setGeneratedAddress(data.publicKey);
         setIsSuccess(true);
         toast.success("Wallet created! Check your email for the private key.");
         return;
       }
 
-      // Handle response with error field (could be 409 - existing wallet)
+      // Handle response with error field (could be existing wallet)
       if (data?.error) {
         if (data.publicKey) {
+          setProgressStep("done");
           toast.info("A wallet already exists for this email");
           setGeneratedAddress(data.publicKey);
           setIsSuccess(true);
@@ -77,6 +102,7 @@ export const WalletGenerator = () => {
           try {
             const errorData = await error.context.json();
             if (errorData?.publicKey) {
+              setProgressStep("done");
               toast.info("A wallet already exists for this email");
               setGeneratedAddress(errorData.publicKey);
               setIsSuccess(true);
@@ -96,6 +122,7 @@ export const WalletGenerator = () => {
       toast.error(error?.message || "Failed to generate wallet");
     } finally {
       setIsLoading(false);
+      setProgressStep("idle");
       setTurnstileToken(null);
     }
   };
@@ -108,6 +135,7 @@ export const WalletGenerator = () => {
 
     const client = getBackendClient();
     setIsResending(true);
+    setProgressStep("sending");
 
     try {
       const { data, error } = await client.functions.invoke("resend-wallet-email", {
@@ -125,12 +153,14 @@ export const WalletGenerator = () => {
       
       if (data?.error) throw new Error(data.error);
 
+      setProgressStep("done");
       toast.success("Wallet credentials resent! Check your email.");
     } catch (error: any) {
       console.error("Error resending email:", error);
       toast.error(error?.message || "Failed to resend email");
     } finally {
       setIsResending(false);
+      setProgressStep("idle");
       setTurnstileToken(null);
     }
   };
@@ -141,6 +171,7 @@ export const WalletGenerator = () => {
     setIsExistingWallet(false);
     setGeneratedAddress("");
     setTurnstileToken(null);
+    setProgressStep("idle");
     cooldownTimer.reset();
   };
 
@@ -151,7 +182,7 @@ export const WalletGenerator = () => {
       transition={{ duration: 0.6, delay: 0.2 }}
       className="w-full max-w-xl mx-auto"
     >
-      <div className="glass-card gradient-border rounded-2xl p-8 glow-effect">
+      <div className="glass-card gradient-border rounded-2xl p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 rounded-xl bg-primary/20">
             <Wallet className="w-6 h-6 text-primary" />
@@ -181,18 +212,29 @@ export const WalletGenerator = () => {
               onExpire={handleTurnstileExpire}
               onError={handleTurnstileExpire}
             />
+
+            {isLoading && progressStep !== "idle" && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20"
+              >
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
+              </motion.div>
+            )}
             
             <Button
               type="submit"
-              variant="gradient"
-              size="xl"
-              className="w-full"
+              variant="glass"
+              size="lg"
+              className="w-full border border-primary/30"
               disabled={isLoading || !turnstileToken}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating Wallet...
+                  Creating Wallet...
                 </>
               ) : (
                 <>
@@ -204,40 +246,63 @@ export const WalletGenerator = () => {
           </form>
         ) : (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="space-y-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
           >
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-              <div className="p-2 rounded-full bg-green-500/20">
-                <Check className="w-5 h-5 text-green-400" />
-              </div>
-              <div>
-                <p className="font-medium text-green-400">
-                  {isExistingWallet ? "Wallet Found!" : "Wallet Created Successfully!"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {isExistingWallet ? `Wallet exists for ${email}` : `Private key sent to ${email}`}
-                </p>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <Check className="w-4 h-4" />
+              <span>{isExistingWallet ? "Wallet found and verified" : "Wallet created successfully"}</span>
             </div>
             
-            <div className="p-4 rounded-xl bg-muted/50 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Public Address</p>
-              <p className="font-mono text-sm text-foreground break-all">{generatedAddress}</p>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Email</p>
+                <p className="text-sm text-foreground">{email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Public Key</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-sm text-foreground break-all flex-1">{generatedAddress}</p>
+                  <button
+                    onClick={() => copyToClipboard(generatedAddress)}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <Copy className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                  {isExistingWallet ? "Existing Wallet" : "Created"}
+                </span>
+              </div>
             </div>
 
             {isExistingWallet && (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2">
                 <TurnstileWidget
                   onVerify={handleTurnstileVerify}
                   onExpire={handleTurnstileExpire}
                   onError={handleTurnstileExpire}
                 />
+
+                {isResending && progressStep !== "idle" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20"
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
+                  </motion.div>
+                )}
                 
                 <Button 
                   variant="glass" 
-                  className="w-full border border-primary/30"
+                  size="lg"
+                  className="w-full border border-border"
                   onClick={handleResendEmail}
                   disabled={isResending || cooldownTimer.isActive || !turnstileToken}
                 >
@@ -267,7 +332,7 @@ export const WalletGenerator = () => {
               </div>
             )}
 
-            <Button variant="outline" className="w-full" onClick={resetForm}>
+            <Button variant="outline" size="lg" className="w-full" onClick={resetForm}>
               Generate Another Wallet
             </Button>
           </motion.div>
