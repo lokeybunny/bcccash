@@ -11,6 +11,9 @@ interface ResendEmailRequest {
   email: string;
 }
 
+// Rate limit: 5 minutes between resend requests
+const RATE_LIMIT_MINUTES = 5;
+
 // Base58 encoding for Solana keys
 const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
@@ -156,6 +159,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check rate limiting
+    if (wallet.last_email_sent_at) {
+      const lastSent = new Date(wallet.last_email_sent_at);
+      const now = new Date();
+      const minutesSinceLastEmail = (now.getTime() - lastSent.getTime()) / (1000 * 60);
+      
+      if (minutesSinceLastEmail < RATE_LIMIT_MINUTES) {
+        const remainingMinutes = Math.ceil(RATE_LIMIT_MINUTES - minutesSinceLastEmail);
+        return new Response(
+          JSON.stringify({ 
+            error: `Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before requesting another email`,
+            retryAfter: remainingMinutes
+          }),
+          { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
+
     // Reconstruct private key from stored secret key array
     const secretKeyArray = wallet.secret_key as number[];
     const secretKeyBytes = new Uint8Array(secretKeyArray);
@@ -164,13 +185,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email
     await sendEmail(email, wallet.public_key, privateKey, secretKeyArray);
 
-    // Update confirmed status if not already
-    if (!wallet.confirmed) {
-      await supabase
-        .from("wallets")
-        .update({ confirmed: true })
-        .eq("email", email);
-    }
+    // Update timestamp and confirmed status
+    await supabase
+      .from("wallets")
+      .update({ 
+        confirmed: true,
+        last_email_sent_at: new Date().toISOString()
+      })
+      .eq("email", email);
 
     return new Response(
       JSON.stringify({ 
