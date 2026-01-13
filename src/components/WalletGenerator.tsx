@@ -4,7 +4,7 @@ import { Mail, Wallet, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getBackendClient } from "@/lib/backendClient";
 
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
@@ -14,26 +14,30 @@ export const WalletGenerator = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !email.includes("@")) {
       toast.error("Please enter a valid email address");
       return;
     }
 
+    const client = getBackendClient();
+    if (!client) {
+      toast.error("Backend is still initializing. Refresh and try again.");
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
-      const { data, error } = await supabase.functions.invoke("generate-wallet", {
+      const { data, error } = await client.functions.invoke("generate-wallet", {
         body: { email },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      if (data.error) {
+      if (data?.error) {
         if (data.publicKey) {
-          toast.error(`A wallet already exists for this email`);
+          toast.error("A wallet already exists for this email");
           setGeneratedAddress(data.publicKey);
           setIsSuccess(true);
         } else {
@@ -42,12 +46,12 @@ export const WalletGenerator = () => {
         return;
       }
 
-      setGeneratedAddress(data.publicKey);
+      setGeneratedAddress(data?.publicKey ?? "");
       setIsSuccess(true);
       toast.success("Wallet created! Check your email for the private key.");
     } catch (error: any) {
       console.error("Error generating wallet:", error);
-      toast.error(error.message || "Failed to generate wallet");
+      toast.error(error?.message || "Failed to generate wallet");
     } finally {
       setIsLoading(false);
     }

@@ -16,9 +16,8 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
-          "bg-gradient-to-r from-[hsl(270,80%,60%)] via-[hsl(200,80%,50%)] to-[hsl(180,70%,45%)] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
-        glass:
-          "backdrop-blur-xl bg-[hsl(220,20%,8%,0.6)] border border-[hsl(220,15%,25%,0.4)] text-foreground hover:bg-muted/50",
+          "bg-gradient-to-r from-solana-purple via-solana-cyan to-solana-teal text-primary-foreground font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
+        glass: "glass-card text-foreground hover:bg-muted/50",
       },
       size: {
         default: "h-10 px-4 py-2",
