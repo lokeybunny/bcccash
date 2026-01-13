@@ -28,10 +28,6 @@ export const VerifyWallet = () => {
     }
 
     const client = getBackendClient();
-    if (!client) {
-      toast.error("Backend is still initializing. Refresh and try again.");
-      return;
-    }
 
     setIsSearching(true);
     setNotFound(false);
