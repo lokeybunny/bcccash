@@ -1,8 +1,23 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import { BCCLogo } from "@/components/BCCLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+
+const navLinks = [
+  { href: "#generate", label: "Generate" },
+  { href: "#verify", label: "Verify" },
+  { href: "#features", label: "How It Works" },
+];
 
 export const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleLinkClick = () => {
+    setIsMenuOpen(false);
+  };
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -15,20 +30,64 @@ export const Header = () => {
           <BCCLogo className="w-11 h-11 text-foreground" />
         </a>
         
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#generate" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Generate
-          </a>
-          <a href="#verify" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Verify
-          </a>
-          <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            How It Works
-          </a>
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden border-t border-border/50"
+          >
+            <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={handleLinkClick}
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 };
