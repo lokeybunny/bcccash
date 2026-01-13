@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { useCooldownTimer } from "@/hooks/useCooldownTimer";
 
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +16,17 @@ export const WalletGenerator = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
-  const [cooldownMinutes, setCooldownMinutes] = useState<number | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const cooldownTimer = useCooldownTimer();
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +36,18 @@ export const WalletGenerator = () => {
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     const client = getBackendClient();
 
     setIsLoading(true);
 
     try {
       const { data, error } = await client.functions.invoke("generate-wallet", {
-        body: { email },
+        body: { email, turnstileToken },
       });
 
       // Handle successful response with data
@@ -79,24 +96,29 @@ export const WalletGenerator = () => {
       toast.error(error?.message || "Failed to generate wallet");
     } finally {
       setIsLoading(false);
+      setTurnstileToken(null);
     }
   };
 
   const handleResendEmail = async () => {
+    if (!turnstileToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     const client = getBackendClient();
     setIsResending(true);
-    setCooldownMinutes(null);
 
     try {
       const { data, error } = await client.functions.invoke("resend-wallet-email", {
-        body: { email },
+        body: { email, turnstileToken },
       });
 
       if (error) throw error;
       
       // Check for rate limiting
       if (data?.retryAfter) {
-        setCooldownMinutes(data.retryAfter);
+        cooldownTimer.startTimer(data.retryAfter);
         toast.error(data.error);
         return;
       }
@@ -109,6 +131,7 @@ export const WalletGenerator = () => {
       toast.error(error?.message || "Failed to resend email");
     } finally {
       setIsResending(false);
+      setTurnstileToken(null);
     }
   };
 
@@ -117,7 +140,8 @@ export const WalletGenerator = () => {
     setIsSuccess(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
-    setCooldownMinutes(null);
+    setTurnstileToken(null);
+    cooldownTimer.reset();
   };
 
   return (
@@ -151,13 +175,19 @@ export const WalletGenerator = () => {
                 disabled={isLoading}
               />
             </div>
+
+            <TurnstileWidget
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
+              onError={handleTurnstileExpire}
+            />
             
             <Button
               type="submit"
               variant="gradient"
               size="xl"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || !turnstileToken}
             >
               {isLoading ? (
                 <>
@@ -198,17 +228,28 @@ export const WalletGenerator = () => {
             </div>
 
             {isExistingWallet && (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                <TurnstileWidget
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                  onError={handleTurnstileExpire}
+                />
+                
                 <Button 
                   variant="glass" 
                   className="w-full border border-primary/30"
                   onClick={handleResendEmail}
-                  disabled={isResending || cooldownMinutes !== null}
+                  disabled={isResending || cooldownTimer.isActive || !turnstileToken}
                 >
                   {isResending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Resending...
+                    </>
+                  ) : cooldownTimer.isActive ? (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Wait {cooldownTimer.formattedTime}
                     </>
                   ) : (
                     <>
@@ -217,9 +258,10 @@ export const WalletGenerator = () => {
                     </>
                   )}
                 </Button>
-                {cooldownMinutes !== null && (
+                
+                {cooldownTimer.isActive && (
                   <p className="text-sm text-muted-foreground text-center">
-                    Please wait {cooldownMinutes} minute{cooldownMinutes > 1 ? 's' : ''} before requesting another email
+                    You can request another email in {cooldownTimer.formattedTime}
                   </p>
                 )}
               </div>

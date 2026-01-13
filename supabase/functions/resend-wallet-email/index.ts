@@ -9,10 +9,36 @@ const corsHeaders = {
 
 interface ResendEmailRequest {
   email: string;
+  turnstileToken: string;
 }
 
 // Rate limit: 5 minutes between resend requests
 const RATE_LIMIT_MINUTES = 5;
+
+async function verifyTurnstile(token: string): Promise<boolean> {
+  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
+  if (!secret) {
+    console.error("TURNSTILE_SECRET_KEY not configured");
+    return false;
+  }
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret,
+        response: token,
+      }),
+    });
+
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+    return false;
+  }
+}
 
 // Base58 encoding for Solana keys
 const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -117,7 +143,23 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email }: ResendEmailRequest = await req.json();
+    const { email, turnstileToken }: ResendEmailRequest = await req.json();
+
+    // Verify Turnstile token
+    if (!turnstileToken) {
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA verification required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const isTurnstileValid = await verifyTurnstile(turnstileToken);
+    if (!isTurnstileValid) {
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA verification failed. Please try again." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!email || !email.includes("@")) {
       return new Response(
