@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { WalletGenerator } from "@/components/WalletGenerator";
 import { VerifyWallet } from "@/components/VerifyWallet";
 import { Features } from "@/components/Features";
@@ -79,14 +80,7 @@ const Index = () => {
         <Features />
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-border">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2025 BCC.cash — Blind Carbon Copy for Solana.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
