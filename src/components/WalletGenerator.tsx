@@ -14,6 +14,7 @@ export const WalletGenerator = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
+  const [cooldownMinutes, setCooldownMinutes] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +85,7 @@ export const WalletGenerator = () => {
   const handleResendEmail = async () => {
     const client = getBackendClient();
     setIsResending(true);
+    setCooldownMinutes(null);
 
     try {
       const { data, error } = await client.functions.invoke("resend-wallet-email", {
@@ -91,6 +93,14 @@ export const WalletGenerator = () => {
       });
 
       if (error) throw error;
+      
+      // Check for rate limiting
+      if (data?.retryAfter) {
+        setCooldownMinutes(data.retryAfter);
+        toast.error(data.error);
+        return;
+      }
+      
       if (data?.error) throw new Error(data.error);
 
       toast.success("Wallet credentials resent! Check your email.");
@@ -107,6 +117,7 @@ export const WalletGenerator = () => {
     setIsSuccess(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
+    setCooldownMinutes(null);
   };
 
   return (
@@ -187,24 +198,31 @@ export const WalletGenerator = () => {
             </div>
 
             {isExistingWallet && (
-              <Button 
-                variant="glass" 
-                className="w-full border border-primary/30"
-                onClick={handleResendEmail}
-                disabled={isResending}
-              >
-                {isResending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Resending...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    Resend Private Key to Email
-                  </>
+              <div className="space-y-2">
+                <Button 
+                  variant="glass" 
+                  className="w-full border border-primary/30"
+                  onClick={handleResendEmail}
+                  disabled={isResending || cooldownMinutes !== null}
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Resending...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Resend Private Key to Email
+                    </>
+                  )}
+                </Button>
+                {cooldownMinutes !== null && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Please wait {cooldownMinutes} minute{cooldownMinutes > 1 ? 's' : ''} before requesting another email
+                  </p>
                 )}
-              </Button>
+              </div>
             )}
 
             <Button variant="outline" className="w-full" onClick={resetForm}>
