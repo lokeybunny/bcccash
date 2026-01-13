@@ -76,7 +76,7 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "BCC.cash <onboarding@resend.dev>",
+      from: "BCC.cash <noreply@bcc.cash>",
       to: [to],
       subject: "🔐 Your New Solana Wallet Has Been Created",
       html: `
