@@ -4,6 +4,7 @@ import { Mail, Wallet, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
@@ -21,13 +22,35 @@ export const WalletGenerator = () => {
 
     setIsLoading(true);
     
-    // Simulate API call - will be replaced with actual backend
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-wallet", {
+        body: { email },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        if (data.publicKey) {
+          toast.error(`A wallet already exists for this email`);
+          setGeneratedAddress(data.publicKey);
+          setIsSuccess(true);
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
+
+      setGeneratedAddress(data.publicKey);
       setIsSuccess(true);
-      setGeneratedAddress("7xKXt...demo");
       toast.success("Wallet created! Check your email for the private key.");
-    }, 2000);
+    } catch (error: any) {
+      console.error("Error generating wallet:", error);
+      toast.error(error.message || "Failed to generate wallet");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetForm = () => {
