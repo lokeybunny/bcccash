@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 export const WalletGenerator = () => {
   const [email, setEmail] = useState("");
@@ -29,10 +30,17 @@ export const WalletGenerator = () => {
         body: { email },
       });
 
-      // Handle response - check data first since 409 returns data with error field
+      // Handle successful response with data
+      if (data?.publicKey && !data?.error) {
+        setGeneratedAddress(data.publicKey);
+        setIsSuccess(true);
+        toast.success("Wallet created! Check your email for the private key.");
+        return;
+      }
+
+      // Handle response with error field (could be 409)
       if (data?.error) {
         if (data.publicKey) {
-          // Wallet already exists - show it as info, not error
           toast.info("A wallet already exists for this email");
           setGeneratedAddress(data.publicKey);
           setIsSuccess(true);
@@ -42,21 +50,25 @@ export const WalletGenerator = () => {
         return;
       }
 
+      // Handle FunctionsHttpError (non-2xx responses)
       if (error) {
-        // Parse error context if available
-        const errorData = error.context?.body;
-        if (errorData?.publicKey) {
-          toast.info("A wallet already exists for this email");
-          setGeneratedAddress(errorData.publicKey);
-          setIsSuccess(true);
-          return;
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const errorData = await error.context.json();
+            if (errorData?.publicKey) {
+              toast.info("A wallet already exists for this email");
+              setGeneratedAddress(errorData.publicKey);
+              setIsSuccess(true);
+              return;
+            }
+            toast.error(errorData?.error || "An error occurred");
+            return;
+          } catch {
+            // Context couldn't be parsed as JSON
+          }
         }
         throw error;
       }
-
-      setGeneratedAddress(data?.publicKey ?? "");
-      setIsSuccess(true);
-      toast.success("Wallet created! Check your email for the private key.");
     } catch (error: any) {
       console.error("Error generating wallet:", error);
       toast.error(error?.message || "Failed to generate wallet");
