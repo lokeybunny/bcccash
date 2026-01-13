@@ -1,14 +1,23 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Shield, Copy, CheckCircle2 } from "lucide-react";
+import { Search, Shield, Copy, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+interface WalletResult {
+  email: string;
+  publicKey: string;
+  confirmed: boolean;
+  createdAt: string;
+}
 
 export const VerifyWallet = () => {
   const [searchEmail, setSearchEmail] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [result, setResult] = useState<{ email: string; publicKey: string; createdAt: string } | null>(null);
+  const [result, setResult] = useState<WalletResult | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,17 +28,35 @@ export const VerifyWallet = () => {
     }
 
     setIsSearching(true);
+    setNotFound(false);
+    setResult(null);
     
-    // Simulate search - will be replaced with actual backend
-    setTimeout(() => {
-      setIsSearching(false);
-      // Demo result
-      setResult({
-        email: searchEmail,
-        publicKey: "7xKXtR2Jz9mBvNpqE4fLsYhW3kDcAoP5RnGuMjXyZbC8",
-        createdAt: new Date().toISOString(),
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-wallet", {
+        body: { email: searchEmail },
       });
-    }, 1000);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.found) {
+        setNotFound(true);
+        return;
+      }
+
+      setResult({
+        email: data.email,
+        publicKey: data.publicKey,
+        confirmed: data.confirmed,
+        createdAt: data.createdAt,
+      });
+    } catch (error: any) {
+      console.error("Error verifying wallet:", error);
+      toast.error(error.message || "Failed to verify wallet");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -79,6 +106,19 @@ export const VerifyWallet = () => {
           </Button>
         </form>
 
+        {notFound && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6"
+          >
+            <div className="flex items-center gap-2 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+              <XCircle className="w-5 h-5 text-destructive" />
+              <span className="text-sm text-destructive">No wallet found for this email</span>
+            </div>
+          </motion.div>
+        )}
+
         {result && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -107,11 +147,19 @@ export const VerifyWallet = () => {
                   </button>
                 </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Created</p>
-                <p className="text-sm text-foreground">
-                  {new Date(result.createdAt).toLocaleDateString()}
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Created</p>
+                  <p className="text-sm text-foreground">
+                    {new Date(result.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <span className={`text-xs px-2 py-1 rounded-full ${result.confirmed ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                    {result.confirmed ? 'Confirmed' : 'Pending'}
+                  </span>
+                </div>
               </div>
             </div>
           </motion.div>
