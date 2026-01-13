@@ -9,52 +9,38 @@ const corsHeaders = {
 
 interface GenerateWalletRequest {
   email: string;
+  verificationCode: string;
 }
 
 // Rate limiting: max 5 wallet creations per IP per hour
 const RATE_LIMIT_MAX_REQUESTS = 5;
 const RATE_LIMIT_WINDOW_MINUTES = 60;
 
-// In-memory rate limit store (resets on function cold start)
-// For production, consider using Redis or database-based rate limiting
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 function getClientIP(req: Request): string {
-  // Try various headers that might contain the real IP
   const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-  
+  if (forwarded) return forwarded.split(",")[0].trim();
   const realIP = req.headers.get("x-real-ip");
-  if (realIP) {
-    return realIP;
-  }
-  
+  if (realIP) return realIP;
   const cfIP = req.headers.get("cf-connecting-ip");
-  if (cfIP) {
-    return cfIP;
-  }
-  
+  if (cfIP) return cfIP;
   return "unknown";
 }
 
 function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
   const windowMs = RATE_LIMIT_WINDOW_MINUTES * 60 * 1000;
-  
   const record = rateLimitStore.get(ip);
   
   if (!record || now > record.resetTime) {
-    // New window
     rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
     return { allowed: true };
   }
   
   if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
     const retryAfterMs = record.resetTime - now;
-    const retryAfterMinutes = Math.ceil(retryAfterMs / (60 * 1000));
-    return { allowed: false, retryAfter: retryAfterMinutes };
+    return { allowed: false, retryAfter: Math.ceil(retryAfterMs / (60 * 1000)) };
   }
   
   record.count++;
@@ -62,23 +48,9 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
 }
 
 function generateSolanaKeypair(): { publicKey: string; privateKey: string; secretKeyArray: number[] } {
-  // Generate 32 random bytes for private key seed
-  const seed = new Uint8Array(32);
-  crypto.getRandomValues(seed);
-  
-  // For Solana, we need to create a 64-byte secret key
-  // The first 32 bytes are the seed, the last 32 bytes are derived
-  // Using a simple approach that works with Phantom/Solflare imports
-  
-  // Create keypair bytes (64 bytes total)
   const secretKey = new Uint8Array(64);
   crypto.getRandomValues(secretKey);
   
-  // Derive public key using ed25519 curve math (simplified for demo)
-  // In production, you'd use @solana/web3.js Keypair.generate()
-  // For now, we'll use a deterministic approach
-  
-  // Base58 alphabet
   const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
   
   function encodeBase58(bytes: Uint8Array): string {
@@ -105,8 +77,6 @@ function generateSolanaKeypair(): { publicKey: string; privateKey: string; secre
     return str;
   }
   
-  // For the public key, we'll use first 32 bytes of a hash of the secret
-  // This is a placeholder - real implementation needs ed25519
   const publicKeyBytes = secretKey.slice(32, 64);
   
   return {
@@ -181,8 +151,7 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
               <p style="color: #71717a; font-size: 13px; margin: 0;">
                 <strong>Why did you receive this?</strong><br>
-                Someone created a Solana wallet for you, possibly for an airdrop, fundraising campaign, or to send you tokens. 
-                You now have full control of this wallet.
+                You verified your email and created a Solana wallet at BCC.cash.
               </p>
             </div>
 
@@ -195,18 +164,14 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
 
   if (!res.ok) {
     const errorText = await res.text();
-    
-    // Check for Resend domain verification error
     if (errorText.includes("validation_error") && errorText.includes("verify a domain")) {
-      throw new Error("Email domain not verified. The wallet was created but the email could not be sent. Please verify a domain at resend.com/domains.");
+      throw new Error("Email domain not verified. The wallet was created but the email could not be sent.");
     }
-    
     throw new Error(`Failed to send email: ${errorText}`);
   }
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -226,7 +191,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email }: GenerateWalletRequest = await req.json();
+    const { email, verificationCode }: GenerateWalletRequest = await req.json();
 
     if (!email || !email.includes("@")) {
       return new Response(
@@ -235,10 +200,47 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase client
+    if (!verificationCode || verificationCode.length !== 6) {
+      return new Response(
+        JSON.stringify({ error: "Valid 6-digit verification code is required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify the code
+    const { data: verification, error: verifyError } = await supabase
+      .from("email_verifications")
+      .select("*")
+      .eq("email", email)
+      .eq("code", verificationCode)
+      .eq("verified", false)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (verifyError) {
+      console.error("Verification lookup error:", verifyError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify code" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!verification) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired verification code" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Mark code as verified
+    await supabase
+      .from("email_verifications")
+      .update({ verified: true })
+      .eq("id", verification.id);
 
     // Check if wallet already exists for this email
     const { data: existingWallet } = await supabase
@@ -248,8 +250,6 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     if (existingWallet) {
-      // Return 200 so the frontend can handle this as a non-fatal "wallet already exists" state
-      // (Supabase functions.invoke treats non-2xx responses as errors)
       return new Response(
         JSON.stringify({
           error: "A wallet already exists for this email address",
@@ -262,7 +262,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate new Solana keypair
     const { publicKey, privateKey, secretKeyArray } = generateSolanaKeypair();
 
-    // Store wallet in database (including secret key for resend functionality)
+    // Store wallet in database
     const { error: insertError } = await supabase
       .from("wallets")
       .insert({
@@ -283,9 +283,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email with private key
     await sendEmail(email, publicKey, privateKey, secretKeyArray);
 
-    console.log("Email sent successfully to:", email);
-
-    // Update wallet as confirmed (email sent) and set timestamp for rate limiting
+    // Update wallet as confirmed
     await supabase
       .from("wallets")
       .update({ 
