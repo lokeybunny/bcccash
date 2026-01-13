@@ -204,8 +204,8 @@ export const WalletGenerator = () => {
         </div>
 
         {!isSuccess ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="space-y-1">
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -241,11 +241,17 @@ export const WalletGenerator = () => {
               )}
             </div>
 
+            <TurnstileWidget
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
+              onError={handleTurnstileExpire}
+            />
+
             <Button
               type="submit"
               variant="glass"
               size="lg"
-              className="w-full border border-primary/30"
+              className="w-full border border-border"
               disabled={isLoading || !turnstileToken || !emailValidation.isValid}
             >
               {isLoading ? (
@@ -260,12 +266,6 @@ export const WalletGenerator = () => {
                 </>
               )}
             </Button>
-
-            <TurnstileWidget
-              onVerify={handleTurnstileVerify}
-              onExpire={handleTurnstileExpire}
-              onError={handleTurnstileExpire}
-            />
 
             {isLoading && progressStep !== "idle" && (
               <motion.div
