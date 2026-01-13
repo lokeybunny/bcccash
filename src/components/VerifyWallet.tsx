@@ -4,7 +4,7 @@ import { Search, Shield, Copy, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getBackendClient } from "@/lib/backendClient";
 
 interface WalletResult {
   email: string;
@@ -21,26 +21,30 @@ export const VerifyWallet = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!searchEmail) {
       toast.error("Please enter an email address");
+      return;
+    }
+
+    const client = getBackendClient();
+    if (!client) {
+      toast.error("Backend is still initializing. Refresh and try again.");
       return;
     }
 
     setIsSearching(true);
     setNotFound(false);
     setResult(null);
-    
+
     try {
-      const { data, error } = await supabase.functions.invoke("verify-wallet", {
+      const { data, error } = await client.functions.invoke("verify-wallet", {
         body: { email: searchEmail },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      if (!data.found) {
+      if (!data?.found) {
         setNotFound(true);
         return;
       }
@@ -53,7 +57,7 @@ export const VerifyWallet = () => {
       });
     } catch (error: any) {
       console.error("Error verifying wallet:", error);
-      toast.error(error.message || "Failed to verify wallet");
+      toast.error(error?.message || "Failed to verify wallet");
     } finally {
       setIsSearching(false);
     }
