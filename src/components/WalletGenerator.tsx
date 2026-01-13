@@ -29,17 +29,29 @@ export const WalletGenerator = () => {
         body: { email },
       });
 
-      if (error) throw error;
-
+      // Handle response - check data first since 409 returns data with error field
       if (data?.error) {
         if (data.publicKey) {
-          toast.error("A wallet already exists for this email");
+          // Wallet already exists - show it as info, not error
+          toast.info("A wallet already exists for this email");
           setGeneratedAddress(data.publicKey);
           setIsSuccess(true);
         } else {
           toast.error(data.error);
         }
         return;
+      }
+
+      if (error) {
+        // Parse error context if available
+        const errorData = error.context?.body;
+        if (errorData?.publicKey) {
+          toast.info("A wallet already exists for this email");
+          setGeneratedAddress(errorData.publicKey);
+          setIsSuccess(true);
+          return;
+        }
+        throw error;
       }
 
       setGeneratedAddress(data?.publicKey ?? "");
