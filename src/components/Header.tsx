@@ -11,7 +11,7 @@ export const Header = () => {
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center">
-          <BCCLogo className="w-9 h-9 text-foreground" />
+          <BCCLogo className="w-11 h-11 text-foreground" />
         </a>
         
         <nav className="hidden md:flex items-center gap-8">
