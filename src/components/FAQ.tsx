@@ -37,7 +37,7 @@ const faqs = [
   {
     icon: Code,
     question: "How does the wallet generation work?",
-    answer: "We use the Ed25519 elliptic curve algorithm (same as Solana) to generate a cryptographically secure keypair. A 32-byte random seed is generated, the public key is derived from it, and together they form a 64-byte secret key compatible with all Solana wallets. The process happens in secure edge functions with no logging of private keys.",
+    answer: "You enter an email address and complete a Turnstile captcha. Our server then generates a cryptographically secure Ed25519 keypair (the same algorithm Solana uses). The public key is stored in our database, and the complete private key is sent directly to the email address. The private key is never logged or stored - it exists only in that email.",
   },
 ];
 
