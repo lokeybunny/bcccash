@@ -4,7 +4,6 @@ import { Github, Twitter } from "lucide-react";
 
 const socialLinks = [
   { icon: Twitter, href: "https://twitter.com/BCCcash", label: "Twitter" },
-  { icon: Github, href: "https://github.com/bcc-cash", label: "GitHub" },
 ];
 
 export const Footer = () => {
@@ -53,7 +52,7 @@ export const Footer = () => {
             </Link>
           </nav>
 
-          {/* Social Links */}
+          {/* Social Links & GitHub Transparency */}
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (
               <a
@@ -67,6 +66,15 @@ export const Footer = () => {
                 <social.icon className="w-5 h-5" />
               </a>
             ))}
+            <a
+              href="https://github.com/bcc-cash/bcccash"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border/50"
+            >
+              <Github className="w-4 h-4" />
+              <span className="text-sm font-medium">View Source</span>
+            </a>
           </div>
         </div>
 
