@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, Shield, Copy, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { VerificationCertificate } from "./VerificationCertificate";
@@ -161,7 +162,41 @@ export const VerifyWallet = () => {
           </Button>
         </form>
 
-        {notFound && (
+        {/* Loading Skeleton */}
+        {isSearching && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 space-y-3"
+          >
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded-full" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-5 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-5 w-full" />
+              </div>
+              <div className="flex justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-14" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {notFound && !isSearching && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

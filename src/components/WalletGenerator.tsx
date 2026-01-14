@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,7 +17,6 @@ import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
-import type { TurnstileInstance } from "@marsidev/react-turnstile";
 
 type Step = "email" | "success";
 type ProgressStep = "idle" | "generating" | "sending" | "done";
@@ -286,10 +286,28 @@ export const WalletGenerator = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20"
+                  className="space-y-4"
                 >
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
+                  </div>
+                  
+                  {/* Loading skeleton preview */}
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-12" />
+                      <Skeleton className="h-5 w-48" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-5 w-full" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-14" />
+                      <Skeleton className="h-6 w-28 rounded-full" />
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </motion.form>
