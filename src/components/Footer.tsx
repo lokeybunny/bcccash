@@ -44,12 +44,6 @@ export const Footer = () => {
             >
               How It Works
             </a>
-            <Link
-              to="/onboard"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Onboard
-            </Link>
           </nav>
 
           {/* Social Links & GitHub Transparency */}

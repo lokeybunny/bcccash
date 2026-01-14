@@ -7,10 +7,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { href: "#generate", label: "Generate", anchor: "generate" },
-  { href: "#verify", label: "Verify", anchor: "verify" },
-  { href: "#features", label: "How It Works", anchor: "features" },
-  { href: "/onboard", label: "Onboard", isRoute: true },
+  { href: "#generate", label: "Generate" },
+  { href: "#verify", label: "Verify" },
+  { href: "#features", label: "How It Works" },
 ];
 
 export const Header = () => {
@@ -22,10 +21,9 @@ export const Header = () => {
     setIsMenuOpen(false);
   };
 
-  const getHref = (link: typeof navLinks[0]) => {
-    if (link.isRoute) return link.href;
+  const getHref = (href: string) => {
     // If on home page, use anchor; otherwise navigate to home with anchor
-    return isHomePage ? link.href : `/${link.href}`;
+    return isHomePage ? href : `/${href}`;
   };
 
   return (
@@ -42,25 +40,15 @@ export const Header = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) =>
-            link.isRoute ? (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={link.href}
-                href={getHref(link)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </a>
-            )
-          )}
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={getHref(link.href)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -94,27 +82,16 @@ export const Header = () => {
             className="md:hidden overflow-hidden border-t border-border/50"
           >
             <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
-              {navLinks.map((link) =>
-                link.isRoute ? (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    onClick={handleLinkClick}
-                    className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.href}
-                    href={getHref(link)}
-                    onClick={handleLinkClick}
-                    className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
-                  >
-                    {link.label}
-                  </a>
-                )
-              )}
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={getHref(link.href)}
+                  onClick={handleLinkClick}
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  {link.label}
+                </a>
+              ))}
             </nav>
           </motion.div>
         )}
