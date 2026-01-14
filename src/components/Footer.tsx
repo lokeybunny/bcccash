@@ -55,6 +55,12 @@ export const Footer = () => {
             >
               How It Works
             </a>
+            <a
+              href="/#faq"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              FAQ
+            </a>
           </nav>
 
           {/* Social Links */}
