@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy, AlertTriangle } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +15,6 @@ import {
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { useCooldownTimer } from "@/hooks/useCooldownTimer";
 import { SimpleCaptcha } from "@/components/SimpleCaptcha";
 
 type Step = "email" | "success";
@@ -36,10 +35,8 @@ export const WalletGenerator = () => {
   const [source, setSource] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
-  const [walletSource, setWalletSource] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
@@ -50,8 +47,6 @@ export const WalletGenerator = () => {
     if (!EMAIL_REGEX.test(email)) return { isValid: false, message: "Invalid email format" };
     return { isValid: true, message: "" };
   }, [email]);
-
-  const cooldownTimer = useCooldownTimer();
 
   const handleCaptchaVerify = useCallback((verified: boolean) => {
     setIsCaptchaVerified(verified);
@@ -165,37 +160,6 @@ export const WalletGenerator = () => {
     }
   };
 
-  const handleResendEmail = async () => {
-    const client = getBackendClient();
-    setIsResending(true);
-    setProgressStep("sending");
-
-    try {
-      const { data, error } = await client.functions.invoke("resend-wallet-email", {
-        body: { email },
-      });
-
-      if (error) throw error;
-      
-      if (data?.retryAfter) {
-        cooldownTimer.startTimer(data.retryAfter);
-        toast.error(data.error);
-        return;
-      }
-      
-      if (data?.error) throw new Error(data.error);
-
-      setProgressStep("done");
-      toast.success("Wallet credentials resent! Check the email.");
-    } catch (error: any) {
-      console.error("Error resending email:", error);
-      toast.error(error?.message || "Failed to resend email");
-    } finally {
-      setIsResending(false);
-      setProgressStep("idle");
-    }
-  };
-
   const resetForm = () => {
     setStep("email");
     setEmail("");
@@ -203,11 +167,9 @@ export const WalletGenerator = () => {
     setEmailTouched(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
-    setWalletSource(null);
     setProgressStep("idle");
     setIsCaptchaVerified(false);
     setCaptchaKey(prev => prev + 1);
-    cooldownTimer.reset();
   };
 
   return (
@@ -350,48 +312,15 @@ export const WalletGenerator = () => {
               </div>
 
               {isExistingWallet && (
-                <div className="space-y-3 pt-2">
-                  {isResending && progressStep !== "idle" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20"
-                    >
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="text-sm text-primary">{progressSteps[progressStep]}</span>
-                    </motion.div>
-                  )}
-                  
-                  <Button 
-                    variant="glass" 
-                    size="lg"
-                    className="w-full border border-border"
-                    onClick={handleResendEmail}
-                    disabled={isResending || cooldownTimer.isActive}
-                  >
-                    {isResending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Resending...
-                      </>
-                    ) : cooldownTimer.isActive ? (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Wait {cooldownTimer.formattedTime}
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Resend Private Key to Email
-                      </>
-                    )}
-                  </Button>
-                  
-                  {cooldownTimer.isActive && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      You can request another email in {cooldownTimer.formattedTime}
-                    </p>
-                  )}
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span className="text-sm font-medium">Security Notice</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    For security, private keys are never stored and can only be sent once during wallet creation. 
+                    If you've lost access to the private key, the wallet cannot be recovered.
+                  </p>
                 </div>
               )}
 
