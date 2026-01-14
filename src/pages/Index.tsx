@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { WalletGenerator } from "@/components/WalletGenerator";
 import { VerifyWallet } from "@/components/VerifyWallet";
 import { Features } from "@/components/Features";
+import { FAQ } from "@/components/FAQ";
 import { GlowOrb } from "@/components/GlowOrb";
 
 const Index = () => {
@@ -78,6 +79,11 @@ const Index = () => {
       {/* Features */}
       <section id="features">
         <Features />
+      </section>
+
+      {/* FAQ */}
+      <section id="faq">
+        <FAQ />
       </section>
 
       <Footer />
