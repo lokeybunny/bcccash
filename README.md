@@ -149,7 +149,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- Built with [Lovable](https://lovable.dev)
 - Powered by [Supabase](https://supabase.com)
 - Email delivery by [Resend](https://resend.com)
 - Solana libraries by [@solana/web3.js](https://github.com/solana-labs/solana-web3.js)
