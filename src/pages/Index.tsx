@@ -40,14 +40,14 @@ const Index = () => {
             </motion.div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              <span className="text-foreground">Turn Emails Into</span>
+              <span className="gradient-text">Blind Carbon Copy</span>
               <br />
-              <span className="gradient-text">Solana Wallets</span>
+              <span className="text-foreground">for Solana Wallets</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              The simplest way to onboard anyone to Solana. Generate wallets instantly 
-              and deliver private keys securely via email.
+              Just like BCC keeps email recipients private, we keep your keys private too. 
+              Generate Solana wallets instantly and deliver private keys securely via email.
             </p>
 
             <motion.a
