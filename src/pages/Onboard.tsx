@@ -44,6 +44,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     verified: true,
     source: "https://x.com/elonmusk",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/220px-Elon_Musk_Royal_Society_%28crop2%29.jpg",
   },
   {
     id: 2,
@@ -53,6 +54,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "Czbmb7osZxLaX5vGHuXMS2mkdtZEXyTNKwsAUUpLGhkG",
     verified: true,
     source: "https://x.com/SnoopDogg",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Snoop_Dogg_2019_by_Glenn_Francis.jpg/220px-Snoop_Dogg_2019_by_Glenn_Francis.jpg",
   },
   {
     id: 3,
@@ -62,6 +64,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
     verified: true,
     source: "https://x.com/ParisHilton",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Paris_Hilton_2021.jpg/220px-Paris_Hilton_2021.jpg",
   },
   {
     id: 4,
@@ -71,6 +74,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
     verified: true,
     source: "https://x.com/garyvee",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Gary_Vaynerchuk_at_TechCrunch_Disrupt_%28cropped%29.jpg/220px-Gary_Vaynerchuk_at_TechCrunch_Disrupt_%28cropped%29.jpg",
   },
   {
     id: 5,
@@ -80,6 +84,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "So11111111111111111111111111111111111111112",
     verified: true,
     source: "https://solana.org",
+    avatar: "https://upload.wikimedia.org/wikipedia/en/b/b9/Solana_logo.png",
   },
   {
     id: 6,
@@ -89,6 +94,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "MEisE1HzehtrDpAAT8PnLHjpSSkRYakotTuJRPjTpo8",
     verified: true,
     source: "https://magiceden.io",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Magic_Eden_Logo.svg/220px-Magic_Eden_Logo.svg.png",
   },
   {
     id: 7,
@@ -98,6 +104,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "AoKi1tFn7cEzWJFp8qx8E8Q8WpYv4sLx6A8zd4SdMxNK",
     verified: true,
     source: "https://x.com/steveaoki",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Steve_Aoki_at_Veld.jpg/220px-Steve_Aoki_at_Veld.jpg",
   },
   {
     id: 8,
@@ -107,6 +114,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "RariZLy8aZ88GJMncG7hRQ4J8TerNf59sFvFxkv2Dqd",
     verified: true,
     source: "https://rarible.com",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Rarible_Logo.png",
   },
   {
     id: 9,
@@ -116,6 +124,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "PhntmWaLLet111111111111111111111111111111111",
     verified: true,
     source: "https://phantom.app",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Phantom-Icon_App_60x60%403x.png/220px-Phantom-Icon_App_60x60%403x.png",
   },
   {
     id: 10,
@@ -125,6 +134,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "CubanMark2023xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: false,
     source: "https://x.com/mcuban",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Mark_Cuban_2008.jpg/220px-Mark_Cuban_2008.jpg",
   },
   {
     id: 11,
@@ -134,6 +144,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "OpenSea2024xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: true,
     source: "https://opensea.io",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/OpenSea_logo.svg/220px-OpenSea_logo.svg.png",
   },
   {
     id: 12,
@@ -143,6 +154,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "BeepLe69MiLLioN111111111111111111111111111",
     verified: true,
     source: "https://x.com/baboracle",
+    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Beeple_2020.jpg/220px-Beeple_2020.jpg",
   },
 ];
 
