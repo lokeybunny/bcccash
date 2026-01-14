@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy, AlertTriangle } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useCooldownTimer } from "@/hooks/useCooldownTimer";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 type Step = "email" | "success";
 type ProgressStep = "idle" | "generating" | "sending" | "done";
@@ -40,6 +41,8 @@ export const WalletGenerator = () => {
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   const emailValidation = useMemo(() => {
     if (!email) return { isValid: false, message: "" };
@@ -48,6 +51,19 @@ export const WalletGenerator = () => {
   }, [email]);
 
   const cooldownTimer = useCooldownTimer();
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+    toast.error("CAPTCHA verification failed. Please try again.");
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -62,11 +78,21 @@ export const WalletGenerator = () => {
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setShowConfirmDialog(true);
   };
 
   const handleGenerateWallet = async () => {
     setShowConfirmDialog(false);
+
+    if (!turnstileToken) {
+      toast.error("CAPTCHA verification required");
+      return;
+    }
 
     const client = getBackendClient();
     setIsLoading(true);
@@ -77,7 +103,7 @@ export const WalletGenerator = () => {
       setProgressStep("sending");
 
       const { data, error } = await client.functions.invoke("generate-wallet", {
-        body: { email },
+        body: { email, turnstileToken },
       });
 
       // Handle rate limiting
@@ -135,6 +161,9 @@ export const WalletGenerator = () => {
     } finally {
       setIsLoading(false);
       setProgressStep("idle");
+      // Reset Turnstile after attempt
+      setTurnstileToken(null);
+      setTurnstileKey(prev => prev + 1);
     }
   };
 
@@ -176,6 +205,8 @@ export const WalletGenerator = () => {
     setIsExistingWallet(false);
     setGeneratedAddress("");
     setProgressStep("idle");
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
     cooldownTimer.reset();
   };
 
@@ -245,13 +276,29 @@ export const WalletGenerator = () => {
                   <p className="text-xs text-destructive pl-1">{emailValidation.message}</p>
                 )}
               </div>
+
+              {/* Turnstile CAPTCHA */}
+              <div className="py-2">
+                <TurnstileWidget
+                  key={turnstileKey}
+                  onVerify={handleTurnstileVerify}
+                  onError={handleTurnstileError}
+                  onExpire={handleTurnstileExpire}
+                />
+                {turnstileToken && (
+                  <div className="flex items-center justify-center gap-2 mt-2 text-sm text-green-400">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Verified</span>
+                  </div>
+                )}
+              </div>
               
               <Button
                 type="submit"
                 variant="glass"
                 size="lg"
                 className="w-full border border-border"
-                disabled={isLoading || !emailValidation.isValid}
+                disabled={isLoading || !emailValidation.isValid || !turnstileToken}
               >
                 {isLoading ? (
                   <>
