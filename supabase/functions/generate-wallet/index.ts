@@ -239,13 +239,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate new Solana keypair using proper Ed25519 cryptography
     const { publicKey, privateKey, secretKeyArray } = await generateSolanaKeypair();
 
-    // Store wallet in database
+    // Store wallet in database (NO private key stored for security)
     const { error: insertError } = await supabase
       .from("wallets")
       .insert({
         email,
         public_key: publicKey,
-        secret_key: secretKeyArray,
         confirmed: false,
         source: source || null,
       });
