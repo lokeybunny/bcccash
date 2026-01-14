@@ -44,7 +44,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     verified: true,
     source: "https://x.com/elonmusk",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/220px-Elon_Musk_Royal_Society_%28crop2%29.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1893803697185910784/Na5lOWi5_400x400.jpg",
   },
   {
     id: 2,
@@ -54,7 +54,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "Czbmb7osZxLaX5vGHuXMS2mkdtZEXyTNKwsAUUpLGhkG",
     verified: true,
     source: "https://x.com/SnoopDogg",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Snoop_Dogg_2019_by_Glenn_Francis.jpg/220px-Snoop_Dogg_2019_by_Glenn_Francis.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1886891539030028288/PfDmhCAL_400x400.jpg",
   },
   {
     id: 3,
@@ -64,7 +64,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
     verified: true,
     source: "https://x.com/ParisHilton",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Paris_Hilton_2021.jpg/220px-Paris_Hilton_2021.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1869217975397179392/2Z0qnbgp_400x400.jpg",
   },
   {
     id: 4,
@@ -74,7 +74,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
     verified: true,
     source: "https://x.com/garyvee",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Gary_Vaynerchuk_at_TechCrunch_Disrupt_%28cropped%29.jpg/220px-Gary_Vaynerchuk_at_TechCrunch_Disrupt_%28cropped%29.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1587589349809913857/0k1Dk9wC_400x400.jpg",
   },
   {
     id: 5,
@@ -84,7 +84,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "So11111111111111111111111111111111111111112",
     verified: true,
     source: "https://solana.org",
-    avatar: "https://upload.wikimedia.org/wikipedia/en/b/b9/Solana_logo.png",
+    avatar: "https://pbs.twimg.com/profile_images/1853893043763748864/RmQG1L1e_400x400.png",
   },
   {
     id: 6,
@@ -94,7 +94,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "MEisE1HzehtrDpAAT8PnLHjpSSkRYakotTuJRPjTpo8",
     verified: true,
     source: "https://magiceden.io",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Magic_Eden_Logo.svg/220px-Magic_Eden_Logo.svg.png",
+    avatar: "https://pbs.twimg.com/profile_images/1893000499164319744/uvNdqA7a_400x400.jpg",
   },
   {
     id: 7,
@@ -104,7 +104,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "AoKi1tFn7cEzWJFp8qx8E8Q8WpYv4sLx6A8zd4SdMxNK",
     verified: true,
     source: "https://x.com/steveaoki",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Steve_Aoki_at_Veld.jpg/220px-Steve_Aoki_at_Veld.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1864108599708white48/IVP2Bjlj_400x400.jpg",
   },
   {
     id: 8,
@@ -114,7 +114,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "RariZLy8aZ88GJMncG7hRQ4J8TerNf59sFvFxkv2Dqd",
     verified: true,
     source: "https://rarible.com",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Rarible_Logo.png",
+    avatar: "https://pbs.twimg.com/profile_images/1657774560627695617/lqg7MRVs_400x400.jpg",
   },
   {
     id: 9,
@@ -124,7 +124,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "PhntmWaLLet111111111111111111111111111111111",
     verified: true,
     source: "https://phantom.app",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Phantom-Icon_App_60x60%403x.png/220px-Phantom-Icon_App_60x60%403x.png",
+    avatar: "https://pbs.twimg.com/profile_images/1882828253233819648/J3xGqfcO_400x400.jpg",
   },
   {
     id: 10,
@@ -134,7 +134,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "CubanMark2023xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: false,
     source: "https://x.com/mcuban",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Mark_Cuban_2008.jpg/220px-Mark_Cuban_2008.jpg",
+    avatar: "https://pbs.twimg.com/profile_images/1720232273881788416/u0TtIKxM_400x400.jpg",
   },
   {
     id: 11,
@@ -144,7 +144,7 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "OpenSea2024xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: true,
     source: "https://opensea.io",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/OpenSea_logo.svg/220px-OpenSea_logo.svg.png",
+    avatar: "https://pbs.twimg.com/profile_images/1893103127860838401/fNYaJOQX_400x400.jpg",
   },
   {
     id: 12,
@@ -153,8 +153,8 @@ const placeholderData: OnboardEntry[] = [
     category: "Digital Art",
     publicKey: "BeepLe69MiLLioN111111111111111111111111111",
     verified: true,
-    source: "https://x.com/baboracle",
-    avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Beeple_2020.jpg/220px-Beeple_2020.jpg",
+    source: "https://x.com/beeple",
+    avatar: "https://pbs.twimg.com/profile_images/1407418252576464899/QLqH5kXn_400x400.jpg",
   },
 ];
 
@@ -229,6 +229,9 @@ const Onboard = () => {
                         src={entry.avatar || getAvatarUrl(entry.name, entry.type)}
                         alt={entry.name}
                         className="w-10 h-10 rounded-full object-cover border-2 border-border/50"
+                        onError={(e) => {
+                          e.currentTarget.src = getAvatarUrl(entry.name, entry.type);
+                        }}
                       />
                       <div className="flex items-center gap-2">
                         <span>{entry.name}</span>
