@@ -8,7 +8,8 @@ const corsHeaders = {
 };
 
 interface VerifyWalletRequest {
-  email: string;
+  email?: string;
+  publicKey?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -18,11 +19,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email }: VerifyWalletRequest = await req.json();
+    const { email, publicKey }: VerifyWalletRequest = await req.json();
 
-    if (!email) {
+    if (!email && !publicKey) {
       return new Response(
-        JSON.stringify({ error: "Email address is required" }),
+        JSON.stringify({ error: "Email address or public key is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -32,12 +33,18 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Look up wallet by email
-    const { data: wallet, error } = await supabase
+    // Look up wallet by email or public key
+    let query = supabase
       .from("wallets")
-      .select("email, public_key, confirmed, created_at")
-      .eq("email", email)
-      .maybeSingle();
+      .select("email, public_key, confirmed, created_at");
+    
+    if (publicKey) {
+      query = query.eq("public_key", publicKey);
+    } else if (email) {
+      query = query.eq("email", email);
+    }
+
+    const { data: wallet, error } = await query.maybeSingle();
 
     if (error) {
       console.error("Database query error:", error);
@@ -48,8 +55,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!wallet) {
+      const searchType = publicKey ? "public key" : "email";
       return new Response(
-        JSON.stringify({ found: false, message: "No wallet found for this email" }),
+        JSON.stringify({ 
+          found: false, 
+          message: `No wallet found for this ${searchType}`,
+          searchedBy: publicKey ? "publicKey" : "email"
+        }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -61,6 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
         publicKey: wallet.public_key,
         confirmed: wallet.confirmed,
         createdAt: wallet.created_at,
+        searchedBy: publicKey ? "publicKey" : "email"
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
