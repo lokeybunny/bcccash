@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, Shield, Copy, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
+import { VerificationCertificate } from "./VerificationCertificate";
 
 interface WalletResult {
   email: string;
@@ -22,20 +23,24 @@ export const VerifyWallet = () => {
   const [notFound, setNotFound] = useState(false);
   const [notFoundMessage, setNotFoundMessage] = useState("");
 
-  const isEmail = (value: string) => {
-    return value.includes("@") && value.includes(".");
-  };
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!searchValue.trim()) {
-      toast.error("Please enter an email address or public key");
-      return;
+  // Check for verification link parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verifyKey = params.get("verify");
+    if (verifyKey) {
+      setSearchValue(verifyKey);
+      // Auto-trigger search after a short delay
+      setTimeout(() => {
+        verifyWallet(verifyKey);
+      }, 500);
+      // Clean up URL
+      window.history.replaceState({}, "", window.location.pathname);
     }
+  }, []);
 
+  const verifyWallet = async (value: string) => {
     const client = getBackendClient();
-    const searchType = isEmail(searchValue) ? "email" : "publicKey";
+    const searchType = isEmail(value) ? "email" : "publicKey";
 
     setIsSearching(true);
     setNotFound(false);
@@ -44,8 +49,8 @@ export const VerifyWallet = () => {
 
     try {
       const body = searchType === "email" 
-        ? { email: searchValue.trim() } 
-        : { publicKey: searchValue.trim() };
+        ? { email: value.trim() } 
+        : { publicKey: value.trim() };
 
       const { data, error } = await client.functions.invoke("verify-wallet", {
         body,
@@ -77,6 +82,20 @@ export const VerifyWallet = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+  const isEmail = (value: string) => {
+    return value.includes("@") && value.includes(".");
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!searchValue.trim()) {
+      toast.error("Please enter an email address or public key");
+      return;
+    }
+
+    verifyWallet(searchValue);
   };
 
   const copyToClipboard = (text: string) => {
@@ -151,9 +170,19 @@ export const VerifyWallet = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 space-y-3"
           >
-            <div className="flex items-center gap-2 text-sm text-green-400">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Wallet found and verified</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-green-400">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Wallet found and verified</span>
+              </div>
+              <VerificationCertificate
+                publicKey={result.publicKey}
+                email={result.email}
+                createdAt={result.createdAt}
+                confirmed={result.confirmed}
+                source={result.source}
+                searchedBy={result.searchedBy}
+              />
             </div>
             
             <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
