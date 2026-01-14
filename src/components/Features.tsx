@@ -52,9 +52,9 @@ export const Features = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="glass-card rounded-xl p-6 hover:border-primary/30 transition-colors"
+              className="glass-card rounded-xl p-6 hover:border-primary/30 transition-colors text-center md:text-left"
             >
-              <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
+              <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 mx-auto md:mx-0">
                 <feature.icon className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
