@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert } from "lucide-react";
+import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -144,6 +145,15 @@ export const WalletGenerator = () => {
         setGeneratedAddress(data.publicKey);
         setStep("success");
         toast.success("Wallet created! Private key sent to the email.");
+        
+        // Trigger confetti celebration
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#22c55e', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'],
+        });
+        
         return;
       }
 
