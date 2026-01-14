@@ -133,7 +133,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { email }: SendCodeRequest = await req.json();
 
-    if (!email || !email.includes("@")) {
+    // Robust email validation
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const MAX_EMAIL_LENGTH = 254; // RFC 5321
+
+    if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_REGEX.test(email)) {
       return new Response(
         JSON.stringify({ error: "Valid email address is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
