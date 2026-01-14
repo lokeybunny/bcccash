@@ -21,7 +21,19 @@ interface OnboardEntry {
   publicKey: string;
   verified: boolean;
   source?: string;
+  avatar?: string;
 }
+
+// Generate avatar URL using UI Avatars service
+const getAvatarUrl = (name: string, type: OnboardEntry["type"]) => {
+  const colors: Record<OnboardEntry["type"], string> = {
+    celebrity: "9333ea",
+    organization: "3b82f6",
+    influencer: "f59e0b",
+    brand: "10b981",
+  };
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${colors[type]}&color=fff&size=128&bold=true`;
+};
 
 const placeholderData: OnboardEntry[] = [
   {
@@ -200,11 +212,18 @@ const Onboard = () => {
                   className="border-border/30 hover:bg-muted/30 transition-colors"
                 >
                   <TableCell className="font-medium text-foreground">
-                    <div className="flex items-center gap-2">
-                      {entry.name}
-                      {entry.verified && (
-                        <span className="text-primary text-xs">✓</span>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={entry.avatar || getAvatarUrl(entry.name, entry.type)}
+                        alt={entry.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-border/50"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span>{entry.name}</span>
+                        {entry.verified && (
+                          <span className="text-primary text-xs">✓</span>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
