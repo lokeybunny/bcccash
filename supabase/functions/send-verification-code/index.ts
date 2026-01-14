@@ -63,7 +63,7 @@ async function sendVerificationEmail(to: string, code: string): Promise<void> {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "BCC.cash <onboarding@resend.dev>",
+      from: "BCC.cash <noreply@bcc.cash>",
       to: [to],
       subject: "🔐 Your Verification Code",
       html: `
