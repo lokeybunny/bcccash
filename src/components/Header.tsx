@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { BCCLogo } from "@/components/BCCLogo";
@@ -9,6 +10,7 @@ const navLinks = [
   { href: "#generate", label: "Generate" },
   { href: "#verify", label: "Verify" },
   { href: "#features", label: "How It Works" },
+  { href: "/onboard", label: "Onboard", isRoute: true },
 ];
 
 export const Header = () => {
@@ -32,15 +34,25 @@ export const Header = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </a>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -74,16 +86,27 @@ export const Header = () => {
             className="md:hidden overflow-hidden border-t border-border/50"
           >
             <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={handleLinkClick}
-                  className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) =>
+                link.isRoute ? (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    onClick={handleLinkClick}
+                    className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={handleLinkClick}
+                    className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
             </nav>
           </motion.div>
         )}
