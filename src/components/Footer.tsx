@@ -108,10 +108,25 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Text */}
-        <div className="mt-8 pt-6 border-t border-border/30 text-center space-y-3">
+        <div className="mt-8 pt-6 border-t border-border/30 text-center space-y-4">
           <p className="text-xs text-muted-foreground">
             Turn emails into Solana wallets. Perfect for airdrops, fundraising, and onboarding new users to Web3.
           </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              to="/terms"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Terms of Service
+            </Link>
+            <span className="text-muted-foreground/50">•</span>
+            <Link
+              to="/privacy"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground">
             © {currentYear} BCC.cash. All rights reserved.
           </p>
