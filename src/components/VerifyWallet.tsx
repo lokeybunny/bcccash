@@ -248,7 +248,14 @@ export const VerifyWallet = () => {
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Public Key</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm text-foreground break-all flex-1">{result.publicKey}</p>
+                      <a
+                        href={`https://solscan.io/account/${result.publicKey}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-primary hover:text-primary/80 transition-colors break-all flex-1"
+                      >
+                        {result.publicKey}
+                      </a>
                       <button
                         onClick={() => copyToClipboard(result.publicKey)}
                         className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -275,7 +282,14 @@ export const VerifyWallet = () => {
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Public Key</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm text-foreground break-all flex-1">{result.publicKey}</p>
+                      <a
+                        href={`https://solscan.io/account/${result.publicKey}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-primary hover:text-primary/80 transition-colors break-all flex-1"
+                      >
+                        {result.publicKey}
+                      </a>
                       <button
                         onClick={() => copyToClipboard(result.publicKey)}
                         className="p-2 rounded-lg hover:bg-muted transition-colors"
