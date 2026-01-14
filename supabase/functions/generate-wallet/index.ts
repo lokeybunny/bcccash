@@ -9,7 +9,6 @@ const corsHeaders = {
 
 interface GenerateWalletRequest {
   email: string;
-  verificationCode: string;
 }
 
 // Rate limiting: max 5 wallet creations per IP per hour
@@ -111,7 +110,7 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
             
             <div style="text-align: center; margin-bottom: 32px;">
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px;">🎉 Welcome to Solana!</h1>
-              <p style="color: #a1a1aa; margin: 0;">Your new wallet has been created</p>
+              <p style="color: #a1a1aa; margin: 0;">A new wallet has been created for you</p>
             </div>
 
             <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
@@ -151,7 +150,7 @@ async function sendEmail(to: string, publicKey: string, privateKey: string, secr
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
               <p style="color: #71717a; font-size: 13px; margin: 0;">
                 <strong>Why did you receive this?</strong><br>
-                You verified your email and created a Solana wallet at BCC.cash.
+                Someone created a Solana wallet for you at BCC.cash.
               </p>
             </div>
 
@@ -191,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, verificationCode }: GenerateWalletRequest = await req.json();
+    const { email }: GenerateWalletRequest = await req.json();
 
     if (!email || !email.includes("@")) {
       return new Response(
@@ -200,47 +199,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!verificationCode || verificationCode.length !== 6) {
-      return new Response(
-        JSON.stringify({ error: "Valid 6-digit verification code is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Verify the code
-    const { data: verification, error: verifyError } = await supabase
-      .from("email_verifications")
-      .select("*")
-      .eq("email", email)
-      .eq("code", verificationCode)
-      .eq("verified", false)
-      .gt("expires_at", new Date().toISOString())
-      .maybeSingle();
-
-    if (verifyError) {
-      console.error("Verification lookup error:", verifyError);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify code" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (!verification) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired verification code" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Mark code as verified
-    await supabase
-      .from("email_verifications")
-      .update({ verified: true })
-      .eq("id", verification.id);
 
     // Check if wallet already exists for this email
     const { data: existingWallet } = await supabase
