@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { BCCLogo } from "@/components/BCCLogo";
@@ -7,17 +7,25 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { href: "#generate", label: "Generate" },
-  { href: "#verify", label: "Verify" },
-  { href: "#features", label: "How It Works" },
+  { href: "#generate", label: "Generate", anchor: "generate" },
+  { href: "#verify", label: "Verify", anchor: "verify" },
+  { href: "#features", label: "How It Works", anchor: "features" },
   { href: "/onboard", label: "Onboard", isRoute: true },
 ];
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   const handleLinkClick = () => {
     setIsMenuOpen(false);
+  };
+
+  const getHref = (link: typeof navLinks[0]) => {
+    if (link.isRoute) return link.href;
+    // If on home page, use anchor; otherwise navigate to home with anchor
+    return isHomePage ? link.href : `/${link.href}`;
   };
 
   return (
@@ -28,9 +36,9 @@ export const Header = () => {
       className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50"
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="/" className="flex items-center transition-transform duration-200 hover:scale-110">
+        <Link to="/" className="flex items-center transition-transform duration-200 hover:scale-110">
           <BCCLogo className="w-11 h-11 text-foreground" />
-        </a>
+        </Link>
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
@@ -46,7 +54,7 @@ export const Header = () => {
             ) : (
               <a
                 key={link.href}
-                href={link.href}
+                href={getHref(link)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
@@ -99,7 +107,7 @@ export const Header = () => {
                 ) : (
                   <a
                     key={link.href}
-                    href={link.href}
+                    href={getHref(link)}
                     onClick={handleLinkClick}
                     className="text-base text-muted-foreground hover:text-foreground transition-colors py-2"
                   >
