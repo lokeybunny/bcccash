@@ -250,15 +250,6 @@ const Onboard = () => {
             </TableBody>
           </Table>
         </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center text-muted-foreground text-sm mt-8"
-        >
-          This is placeholder data for demonstration purposes. Real verifications coming soon.
-        </motion.p>
       </main>
 
       <Footer />
