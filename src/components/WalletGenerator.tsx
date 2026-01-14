@@ -1,8 +1,18 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -29,6 +39,7 @@ export const WalletGenerator = () => {
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const emailValidation = useMemo(() => {
     if (!email) return { isValid: false, message: "" };
@@ -43,13 +54,19 @@ export const WalletGenerator = () => {
     toast.success("Copied to clipboard!");
   };
 
-  const handleGenerateWallet = async (e?: React.FormEvent) => {
+  const handleFormSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
 
     if (!emailValidation.isValid) {
       toast.error("Please enter a valid email address");
       return;
     }
+
+    setShowConfirmDialog(true);
+  };
+
+  const handleGenerateWallet = async () => {
+    setShowConfirmDialog(false);
 
     const client = getBackendClient();
     setIsLoading(true);
@@ -190,7 +207,7 @@ export const WalletGenerator = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              onSubmit={handleGenerateWallet}
+              onSubmit={handleFormSubmit}
               className="space-y-4"
             >
               <div className="space-y-1">
@@ -353,6 +370,34 @@ export const WalletGenerator = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="glass-card border-border">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-amber-500/20">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <AlertDialogTitle>Confirm Wallet Creation</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="space-y-3">
+              <p>You are about to create a new Solana wallet and send the private key to:</p>
+              <p className="font-medium text-foreground bg-muted/50 px-3 py-2 rounded-lg break-all">
+                {email}
+              </p>
+              <p className="text-amber-500">
+                ⚠️ Make sure this email address is correct. The private key will be sent directly to this address.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleGenerateWallet}>
+              Yes, Create Wallet
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
