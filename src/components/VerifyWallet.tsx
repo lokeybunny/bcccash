@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Shield, Copy, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Shield, Copy, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -190,7 +190,15 @@ export const VerifyWallet = () => {
                 <>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Associated Email</p>
-                    <p className="text-sm text-foreground">{result.email}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-foreground flex-1">{result.email}</p>
+                      <button
+                        onClick={() => copyToClipboard(result.email)}
+                        className="p-2 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <Copy className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Public Key</p>
@@ -209,7 +217,15 @@ export const VerifyWallet = () => {
                 <>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Email</p>
-                    <p className="text-sm text-foreground">{result.email}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-foreground flex-1">{result.email}</p>
+                      <button
+                        onClick={() => copyToClipboard(result.email)}
+                        className="p-2 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <Copy className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Public Key</p>
@@ -229,7 +245,15 @@ export const VerifyWallet = () => {
               {result.source && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Source</p>
-                  <p className="text-sm text-foreground">{result.source}</p>
+                  <a
+                    href={result.source.startsWith("http") ? result.source : `https://${result.source}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+                  >
+                    {result.source}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               )}
               
