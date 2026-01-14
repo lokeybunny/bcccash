@@ -10,6 +10,7 @@ const corsHeaders = {
 
 interface GenerateWalletRequest {
   email: string;
+  source?: string;
 }
 
 // Rate limiting: max 5 wallet creations per IP per hour
@@ -205,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email }: GenerateWalletRequest = await req.json();
+    const { email, source }: GenerateWalletRequest = await req.json();
 
     if (!email || !email.includes("@")) {
       return new Response(
@@ -246,6 +247,7 @@ const handler = async (req: Request): Promise<Response> => {
         public_key: publicKey,
         secret_key: secretKeyArray,
         confirmed: false,
+        source: source || null,
       });
 
     if (insertError) {
