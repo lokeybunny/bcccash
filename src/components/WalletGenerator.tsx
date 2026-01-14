@@ -43,12 +43,26 @@ export const WalletGenerator = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileKey, setTurnstileKey] = useState(0);
+  const [sourceTouched, setSourceTouched] = useState(false);
 
   const emailValidation = useMemo(() => {
     if (!email) return { isValid: false, message: "" };
     if (!EMAIL_REGEX.test(email)) return { isValid: false, message: "Invalid email format" };
     return { isValid: true, message: "" };
   }, [email]);
+
+  const sourceValidation = useMemo(() => {
+    if (!source.trim()) return { isValid: true, message: "" }; // Optional field
+    try {
+      const url = new URL(source.startsWith("http") ? source : `https://${source}`);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        return { isValid: false, message: "Must be a valid web address" };
+      }
+      return { isValid: true, message: "" };
+    } catch {
+      return { isValid: false, message: "Must be a valid URL (e.g., https://twitter.com/...)" };
+    }
+  }, [source]);
 
   const handleTurnstileVerify = useCallback((token: string) => {
     setTurnstileToken(token);
@@ -96,6 +110,11 @@ export const WalletGenerator = () => {
   const handleGenerateWallet = async () => {
     if (!turnstileToken) {
       toast.error("Please complete the captcha verification");
+      return;
+    }
+
+    if (source.trim() && !sourceValidation.isValid) {
+      toast.error("Please enter a valid source URL");
       return;
     }
 
@@ -420,16 +439,29 @@ export const WalletGenerator = () => {
                 
                 {/* Source input */}
                 <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">Source (optional)</label>
+                  <label className="text-sm text-muted-foreground">Source URL (optional)</label>
                   <Input
-                    type="text"
-                    placeholder="e.g., Twitter, LinkedIn, GitHub"
+                    type="url"
+                    placeholder="https://twitter.com/username"
                     value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    className="h-10"
+                    onChange={(e) => {
+                      setSource(e.target.value);
+                      setSourceTouched(true);
+                    }}
+                    onBlur={() => setSourceTouched(true)}
+                    className={`h-10 ${
+                      sourceTouched && source
+                        ? sourceValidation.isValid
+                          ? "border-green-500/50 focus-visible:ring-green-500/30"
+                          : "border-destructive/50 focus-visible:ring-destructive/30"
+                        : ""
+                    }`}
                   />
+                  {sourceTouched && source && !sourceValidation.isValid && (
+                    <p className="text-xs text-destructive">{sourceValidation.message}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">
-                    Where was this email publicly found?
+                    Link to where this email was publicly found
                   </p>
                 </div>
                 
