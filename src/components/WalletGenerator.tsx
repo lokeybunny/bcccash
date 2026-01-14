@@ -277,19 +277,6 @@ export const WalletGenerator = () => {
                 )}
               </div>
 
-              <div className="space-y-1">
-                <Input
-                  type="text"
-                  placeholder="Source (optional) - e.g., Twitter, LinkedIn, GitHub"
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  className="h-12"
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground pl-1">
-                  Where was this email publicly found?
-                </p>
-              </div>
               
               <Button
                 type="submit"
@@ -431,6 +418,22 @@ export const WalletGenerator = () => {
                 <p className="font-medium text-foreground bg-muted/50 px-3 py-2 rounded-lg break-all">
                   {email}
                 </p>
+                
+                {/* Source input */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">Source (optional)</label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Twitter, LinkedIn, GitHub"
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Where was this email publicly found?
+                  </p>
+                </div>
+                
                 <p className="text-amber-500">
                   ⚠️ Make sure this email address is correct. The private key will be sent directly to this address.
                 </p>
