@@ -10,6 +10,7 @@ const navLinks = [
   { href: "#generate", label: "Generate" },
   { href: "#verify", label: "Verify" },
   { href: "#features", label: "How It Works" },
+  { href: "#faq", label: "FAQ" },
 ];
 
 export const Header = () => {
