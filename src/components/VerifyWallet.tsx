@@ -128,11 +128,11 @@ export const VerifyWallet = () => {
       className="w-full max-w-xl mx-auto"
     >
       <div className="glass-card gradient-border rounded-2xl p-8">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
           <div className="p-3 rounded-xl bg-secondary/20">
             <Shield className="w-6 h-6 text-secondary" />
           </div>
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-xl font-semibold text-foreground">Verify Address</h3>
             <p className="text-sm text-muted-foreground">Look up a wallet by email or public key</p>
           </div>
