@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,8 @@ import {
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { SimpleCaptcha } from "@/components/SimpleCaptcha";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 
 type Step = "email" | "success";
 type ProgressStep = "idle" | "generating" | "sending" | "done";
@@ -39,8 +40,8 @@ export const WalletGenerator = () => {
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
-  const [captchaKey, setCaptchaKey] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   const emailValidation = useMemo(() => {
     if (!email) return { isValid: false, message: "" };
@@ -48,8 +49,22 @@ export const WalletGenerator = () => {
     return { isValid: true, message: "" };
   }, [email]);
 
-  const handleCaptchaVerify = useCallback((verified: boolean) => {
-    setIsCaptchaVerified(verified);
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+    toast.error("Captcha verification failed. Please try again.");
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
   }, []);
 
   const copyToClipboard = (text: string) => {
@@ -65,24 +80,21 @@ export const WalletGenerator = () => {
       return;
     }
 
-    // Reset captcha when opening dialog
-    setIsCaptchaVerified(false);
-    setCaptchaKey(prev => prev + 1);
+    // Reset turnstile when opening dialog
+    resetTurnstile();
     setShowConfirmDialog(true);
   };
 
   const handleDialogClose = (open: boolean) => {
     if (!open) {
-      // Reset captcha when closing dialog
-      setIsCaptchaVerified(false);
-      setCaptchaKey(prev => prev + 1);
+      resetTurnstile();
     }
     setShowConfirmDialog(open);
   };
 
   const handleGenerateWallet = async () => {
-    if (!isCaptchaVerified) {
-      toast.error("Please solve the captcha first");
+    if (!turnstileToken) {
+      toast.error("Please complete the captcha verification");
       return;
     }
 
@@ -97,12 +109,22 @@ export const WalletGenerator = () => {
       setProgressStep("sending");
 
       const { data, error } = await client.functions.invoke("generate-wallet", {
-        body: { email, source: source.trim() || undefined },
+        body: { 
+          email, 
+          source: source.trim() || undefined,
+          turnstileToken 
+        },
       });
 
       // Handle rate limiting
       if (data?.retryAfter) {
         toast.error(data.error || "Too many requests");
+        return;
+      }
+
+      // Handle captcha failure
+      if (data?.error?.includes("Captcha")) {
+        toast.error(data.error);
         return;
       }
 
@@ -157,8 +179,7 @@ export const WalletGenerator = () => {
     } finally {
       setIsLoading(false);
       setProgressStep("idle");
-      setIsCaptchaVerified(false);
-      setCaptchaKey(prev => prev + 1);
+      resetTurnstile();
     }
   };
 
@@ -170,8 +191,7 @@ export const WalletGenerator = () => {
     setIsExistingWallet(false);
     setGeneratedAddress("");
     setProgressStep("idle");
-    setIsCaptchaVerified(false);
-    setCaptchaKey(prev => prev + 1);
+    resetTurnstile();
   };
 
   return (
@@ -369,12 +389,14 @@ export const WalletGenerator = () => {
                   ⚠️ Make sure this email address is correct. The private key will be sent directly to this address.
                 </p>
                 
-                {/* Captcha inside dialog */}
+                {/* Turnstile Captcha */}
                 <div className="pt-2">
-                  <p className="text-sm text-muted-foreground mb-3">Solve to confirm you're human:</p>
-                  <SimpleCaptcha 
-                    key={captchaKey}
-                    onVerify={handleCaptchaVerify} 
+                  <p className="text-sm text-muted-foreground mb-3">Complete verification:</p>
+                  <TurnstileWidget
+                    key={turnstileKey}
+                    onVerify={handleTurnstileVerify}
+                    onExpire={handleTurnstileExpire}
+                    onError={handleTurnstileError}
                   />
                 </div>
               </div>
@@ -384,7 +406,7 @@ export const WalletGenerator = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <Button
               onClick={handleGenerateWallet}
-              disabled={!isCaptchaVerified}
+              disabled={!turnstileToken}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Yes, Create Wallet

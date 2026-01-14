@@ -11,6 +11,7 @@ const corsHeaders = {
 interface GenerateWalletRequest {
   email: string;
   source?: string;
+  turnstileToken?: string;
 }
 
 // Rate limiting: max 5 wallet creations per IP per hour
@@ -206,7 +207,39 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, source }: GenerateWalletRequest = await req.json();
+    const { email, source, turnstileToken }: GenerateWalletRequest = await req.json();
+
+    // Verify Turnstile token server-side
+    const TURNSTILE_SECRET_KEY = Deno.env.get("TURNSTILE_SECRET_KEY");
+    if (TURNSTILE_SECRET_KEY) {
+      if (!turnstileToken) {
+        return new Response(
+          JSON.stringify({ error: "Captcha verification required" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const turnstileResponse = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            secret: TURNSTILE_SECRET_KEY,
+            response: turnstileToken,
+          }),
+        }
+      );
+
+      const turnstileResult = await turnstileResponse.json();
+      if (!turnstileResult.success) {
+        console.error("Turnstile verification failed:", turnstileResult);
+        return new Response(
+          JSON.stringify({ error: "Captcha verification failed. Please try again." }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
 
     // Robust email validation
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
