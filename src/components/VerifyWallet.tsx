@@ -109,6 +109,16 @@ export const VerifyWallet = () => {
     return `${local.slice(0, 2)}***@${domain}`;
   };
 
+  // Validate URL to prevent javascript: and other dangerous protocols
+  const isValidHttpUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -242,7 +252,7 @@ export const VerifyWallet = () => {
                 </>
               )}
               
-              {result.source && (
+              {result.source && isValidHttpUrl(result.source) && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Source</p>
                   <a
