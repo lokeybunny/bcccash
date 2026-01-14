@@ -20,8 +20,8 @@
 ## 🚀 Features
 
 - **Email-to-Wallet Generation**: Generate unique Solana wallet addresses linked to email addresses
-- **Email Verification**: Secure 6-digit code verification sent via Resend
-- **Wallet Verification**: Look up existing wallets by email address
+- **Server-Side Captcha**: Cloudflare Turnstile verification prevents bot abuse
+- **Wallet Verification**: Look up existing wallets by email address or public key
 - **Verification Certificates**: Generate shareable certificates proving wallet ownership
 - **Rate Limiting**: Built-in protection against abuse with cooldown timers
 - **Dark/Light Mode**: Full theme support for user preference
@@ -31,28 +31,29 @@
 
 This repository is **fully open source** to ensure complete transparency. Here's what you need to know:
 
-### Private Keys Are NEVER Stored or Transmitted
+### Private Keys Are NEVER Stored
 
-- ✅ Private keys are generated **server-side** and returned to the client **once**
+- ✅ Private keys are generated **server-side** using Ed25519 cryptography
+- ✅ Private keys are sent **directly to the recipient's email** and immediately discarded
 - ✅ Only the **public key** is stored in the database
-- ✅ The database **never stores** private keys
-- ✅ All wallet generation happens in secure edge functions with cryptographic libraries
+- ✅ The server **never logs or stores** private keys
+- ✅ All wallet generation happens in secure edge functions
 
 ### Code You Can Audit
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Wallet Generation | `supabase/functions/generate-wallet/` | Generates keypairs, returns private key to client only |
-| Email Verification | `supabase/functions/send-verification-code/` | Sends 6-digit codes via email |
+| Wallet Generation | `supabase/functions/generate-wallet/` | Generates keypairs, sends private key via email |
 | Wallet Lookup | `supabase/functions/verify-wallet/` | Looks up public keys by email |
 | Frontend Components | `src/components/` | React UI components |
 
 ### Security Measures
 
+- **Server-Side Captcha**: Cloudflare Turnstile verification on all wallet generation
 - **Robust Email Validation**: RFC-compliant email validation (max 254 chars, proper format)
-- **Rate Limiting**: Cooldown periods prevent spam and abuse
-- **Row Level Security**: Database policies protect user data
-- **No Authentication Required**: Wallets are tied to verified emails, not user accounts
+- **Rate Limiting**: IP-based and email-based cooldown periods prevent spam and abuse
+- **Row Level Security**: Database policies block all direct public access
+- **URL Validation**: Source URLs are validated to prevent XSS attacks
 
 ## 🛠️ Tech Stack
 
@@ -61,18 +62,19 @@ This repository is **fully open source** to ensure complete transparency. Here's
 - **Backend**: Supabase Edge Functions (Deno)
 - **Database**: PostgreSQL (via Supabase)
 - **Email**: Resend API
-- **Crypto**: @solana/web3.js, tweetnacl
+- **Captcha**: Cloudflare Turnstile
+- **Crypto**: Ed25519 via @noble/ed25519
 
 ## 📖 How It Works
 
 ### Generating a Wallet
 
-1. User enters their email address
-2. A 6-digit verification code is sent to their email
-3. User enters the code to verify ownership
-4. A new Solana keypair is generated server-side
+1. User enters the recipient's email address
+2. User completes Cloudflare Turnstile captcha verification
+3. Server verifies the captcha token
+4. A new Solana keypair is generated using Ed25519 cryptography
 5. **Only the public key** is stored in the database
-6. The private key is returned to the user **once** and never stored
+6. The private key is sent via email to the recipient and **immediately discarded**
 
 ### Verifying a Wallet
 
@@ -92,8 +94,7 @@ This repository is **fully open source** to ensure complete transparency. Here's
 │   └── lib/                 # Utility functions
 ├── supabase/
 │   └── functions/           # Edge functions (serverless)
-│       ├── generate-wallet/       # Wallet generation logic
-│       ├── send-verification-code/ # Email verification
+│       ├── generate-wallet/       # Wallet generation + email delivery
 │       └── verify-wallet/         # Wallet lookup
 └── public/                  # Static assets
 ```
@@ -105,8 +106,8 @@ The following environment variables are required:
 | Variable | Description |
 |----------|-------------|
 | `RESEND_API_KEY` | API key for Resend email service |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key |
 | `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 
 ## 📊 Database Schema
@@ -122,16 +123,6 @@ The following environment variables are required:
 | `source` | TEXT | Origin of wallet creation |
 | `created_at` | TIMESTAMP | Creation timestamp |
 | `updated_at` | TIMESTAMP | Last update timestamp |
-
-### `email_verifications` Table
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `email` | TEXT | Email being verified |
-| `code` | TEXT | 6-digit verification code |
-| `verified` | BOOLEAN | Verification status |
-| `expires_at` | TIMESTAMP | Code expiration time |
 
 ## 🤝 Contributing
 
