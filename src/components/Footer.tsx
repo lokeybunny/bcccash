@@ -38,16 +38,11 @@ export const Footer = () => {
     <footer className="border-t border-border/50 bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto px-6 py-8">
         <div className="flex flex-col items-center gap-6">
-          {/* Logo and Copyright */}
-          <div className="flex flex-col items-center gap-2 text-center">
-            <Link to="/" className="flex items-center gap-2">
-              <img src={bccLogo} alt="BCC.cash" className="w-8 h-8 object-contain" />
-              <span className="font-semibold text-foreground">BCC.cash</span>
-            </Link>
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} BCC.cash. All rights reserved.
-            </p>
-          </div>
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <img src={bccLogo} alt="BCC.cash" className="w-8 h-8 object-contain" />
+            <span className="font-semibold text-foreground">BCC.cash</span>
+          </Link>
 
           {/* Navigation Links */}
           <nav className="flex flex-wrap items-center justify-center gap-6">
@@ -113,9 +108,12 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Text */}
-        <div className="mt-8 pt-6 border-t border-border/30 text-center">
+        <div className="mt-8 pt-6 border-t border-border/30 text-center space-y-3">
           <p className="text-xs text-muted-foreground">
             Turn emails into Solana wallets. Perfect for airdrops, fundraising, and onboarding new users to Web3.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            © {currentYear} BCC.cash. All rights reserved.
           </p>
         </div>
       </div>
