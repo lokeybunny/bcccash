@@ -9,6 +9,7 @@ const corsHeaders = {
 
 interface GenerateWalletRequest {
   email: string;
+  turnstileToken: string;
 }
 
 // Rate limiting: max 5 wallet creations per IP per hour
@@ -44,6 +45,35 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   
   record.count++;
   return { allowed: true };
+}
+
+async function verifyTurnstileToken(token: string, ip: string): Promise<boolean> {
+  const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+  
+  if (!secretKey) {
+    console.error("TURNSTILE_SECRET_KEY not configured");
+    return false;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("secret", secretKey);
+    formData.append("response", token);
+    formData.append("remoteip", ip);
+
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log("Turnstile verification result:", result);
+    
+    return result.success === true;
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+    return false;
+  }
 }
 
 function generateSolanaKeypair(): { publicKey: string; privateKey: string; secretKeyArray: number[] } {
@@ -190,7 +220,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email }: GenerateWalletRequest = await req.json();
+    const { email, turnstileToken }: GenerateWalletRequest = await req.json();
+
+    // Validate Turnstile token
+    if (!turnstileToken) {
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA verification required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken, clientIP);
+    if (!isTurnstileValid) {
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA verification failed. Please try again." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!email || !email.includes("@")) {
       return new Response(
