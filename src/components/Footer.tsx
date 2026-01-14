@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { BCCLogo } from "@/components/BCCLogo";
+import bccLogo from "@/assets/bcc-logo.png";
 import { toast } from "sonner";
 
 // X (Twitter) logo component
@@ -41,7 +41,7 @@ export const Footer = () => {
           {/* Logo and Copyright */}
           <div className="flex flex-col items-center gap-2 text-center">
             <Link to="/" className="flex items-center gap-2">
-              <BCCLogo className="w-8 h-8 text-foreground" />
+              <img src={bccLogo} alt="BCC.cash" className="w-8 h-8 object-contain" />
               <span className="font-semibold text-foreground">BCC.cash</span>
             </Link>
             <p className="text-sm text-muted-foreground">
