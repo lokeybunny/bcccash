@@ -190,7 +190,7 @@ export const VerifyWallet = () => {
                 <>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Associated Email</p>
-                    <p className="text-sm text-foreground">{maskEmail(result.email)}</p>
+                    <p className="text-sm text-foreground">{result.email}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Public Key</p>
