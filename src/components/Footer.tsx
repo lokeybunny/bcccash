@@ -67,7 +67,7 @@ export const Footer = () => {
               </a>
             ))}
             <a
-              href="https://github.com/bcc-cash/bcccash"
+              href="https://github.com/lokeybunny/bcccash"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border/50"
