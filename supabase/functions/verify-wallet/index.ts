@@ -17,7 +17,7 @@ interface VerifyWalletRequest {
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
-const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests per minute per IP
+const MAX_REQUESTS_PER_WINDOW = 3; // 3 requests per minute per IP
 
 function getClientIP(req: Request): string {
   // Try various headers that might contain the real IP
