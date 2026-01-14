@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -69,15 +68,27 @@ export const WalletGenerator = () => {
       return;
     }
 
+    // Reset captcha when opening dialog
+    setIsCaptchaVerified(false);
+    setCaptchaKey(prev => prev + 1);
+    setShowConfirmDialog(true);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      // Reset captcha when closing dialog
+      setIsCaptchaVerified(false);
+      setCaptchaKey(prev => prev + 1);
+    }
+    setShowConfirmDialog(open);
+  };
+
+  const handleGenerateWallet = async () => {
     if (!isCaptchaVerified) {
       toast.error("Please solve the captcha first");
       return;
     }
 
-    setShowConfirmDialog(true);
-  };
-
-  const handleGenerateWallet = async () => {
     setShowConfirmDialog(false);
 
     const client = getBackendClient();
@@ -147,7 +158,6 @@ export const WalletGenerator = () => {
     } finally {
       setIsLoading(false);
       setProgressStep("idle");
-      // Reset captcha after attempt
       setIsCaptchaVerified(false);
       setCaptchaKey(prev => prev + 1);
     }
@@ -262,19 +272,13 @@ export const WalletGenerator = () => {
                   <p className="text-xs text-destructive pl-1">{emailValidation.message}</p>
                 )}
               </div>
-
-              {/* Simple Math Captcha */}
-              <SimpleCaptcha 
-                key={captchaKey}
-                onVerify={handleCaptchaVerify} 
-              />
               
               <Button
                 type="submit"
                 variant="glass"
                 size="lg"
                 className="w-full border border-border"
-                disabled={isLoading || !emailValidation.isValid || !isCaptchaVerified}
+                disabled={isLoading || !emailValidation.isValid}
               >
                 {isLoading ? (
                   <>
@@ -394,8 +398,8 @@ export const WalletGenerator = () => {
         </AnimatePresence>
       </div>
 
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent className="glass-card border-border">
+      <AlertDialog open={showConfirmDialog} onOpenChange={handleDialogClose}>
+        <AlertDialogContent className="glass-card border-border max-w-md">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-lg bg-amber-500/20">
@@ -403,21 +407,36 @@ export const WalletGenerator = () => {
               </div>
               <AlertDialogTitle>Confirm Wallet Creation</AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="space-y-3">
-              <p>You are about to create a new Solana wallet and send the private key to:</p>
-              <p className="font-medium text-foreground bg-muted/50 px-3 py-2 rounded-lg break-all">
-                {email}
-              </p>
-              <p className="text-amber-500">
-                ⚠️ Make sure this email address is correct. The private key will be sent directly to this address.
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>You are about to create a new Solana wallet and send the private key to:</p>
+                <p className="font-medium text-foreground bg-muted/50 px-3 py-2 rounded-lg break-all">
+                  {email}
+                </p>
+                <p className="text-amber-500">
+                  ⚠️ Make sure this email address is correct. The private key will be sent directly to this address.
+                </p>
+                
+                {/* Captcha inside dialog */}
+                <div className="pt-2">
+                  <p className="text-sm text-muted-foreground mb-3">Solve to confirm you're human:</p>
+                  <SimpleCaptcha 
+                    key={captchaKey}
+                    onVerify={handleCaptchaVerify} 
+                  />
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleGenerateWallet}>
+            <Button
+              onClick={handleGenerateWallet}
+              disabled={!isCaptchaVerified}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Yes, Create Wallet
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
