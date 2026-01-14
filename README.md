@@ -1,73 +1,161 @@
-# Welcome to your Lovable project
+# BCC.cash - Email to Solana Wallet Generator
 
-## Project info
+<p align="center">
+  <img src="public/favicon.svg" alt="BCC Logo" width="80" height="80">
+</p>
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+<p align="center">
+  <strong>Turn emails into Solana wallets. Perfect for airdrops, fundraising, and onboarding new users to Web3.</strong>
+</p>
 
-## How can I edit this code?
+<p align="center">
+  <a href="https://bcccash.lovable.app">Live Demo</a> •
+  <a href="#features">Features</a> •
+  <a href="#security--transparency">Security</a> •
+  <a href="#how-it-works">How It Works</a>
+</p>
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🚀 Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- **Email-to-Wallet Generation**: Generate unique Solana wallet addresses linked to email addresses
+- **Email Verification**: Secure 6-digit code verification sent via Resend
+- **Wallet Verification**: Look up existing wallets by email address
+- **Verification Certificates**: Generate shareable certificates proving wallet ownership
+- **Rate Limiting**: Built-in protection against abuse with cooldown timers
+- **Dark/Light Mode**: Full theme support for user preference
+- **Mobile Responsive**: Works seamlessly on all devices
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🔒 Security & Transparency
 
-**Use your preferred IDE**
+This repository is **fully open source** to ensure complete transparency. Here's what you need to know:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Private Keys Are NEVER Stored or Transmitted
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- ✅ Private keys are generated **server-side** and returned to the client **once**
+- ✅ Only the **public key** is stored in the database
+- ✅ The database **never stores** private keys
+- ✅ All wallet generation happens in secure edge functions with cryptographic libraries
 
-Follow these steps:
+### Code You Can Audit
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Wallet Generation | `supabase/functions/generate-wallet/` | Generates keypairs, returns private key to client only |
+| Email Verification | `supabase/functions/send-verification-code/` | Sends 6-digit codes via email |
+| Wallet Lookup | `supabase/functions/verify-wallet/` | Looks up public keys by email |
+| Frontend Components | `src/components/` | React UI components |
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Security Measures
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Robust Email Validation**: RFC-compliant email validation (max 254 chars, proper format)
+- **Rate Limiting**: Cooldown periods prevent spam and abuse
+- **Row Level Security**: Database policies protect user data
+- **No Authentication Required**: Wallets are tied to verified emails, not user accounts
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Framer Motion
+- **UI Components**: shadcn/ui, Radix UI
+- **Backend**: Supabase Edge Functions (Deno)
+- **Database**: PostgreSQL (via Supabase)
+- **Email**: Resend API
+- **Crypto**: @solana/web3.js, tweetnacl
+
+## 📖 How It Works
+
+### Generating a Wallet
+
+1. User enters their email address
+2. A 6-digit verification code is sent to their email
+3. User enters the code to verify ownership
+4. A new Solana keypair is generated server-side
+5. **Only the public key** is stored in the database
+6. The private key is returned to the user **once** and never stored
+
+### Verifying a Wallet
+
+1. User enters an email address
+2. System looks up the associated public key
+3. If found, displays the wallet address and generates a verification certificate
+
+## 🏗️ Project Structure
+
+```
+├── src/
+│   ├── components/          # React components
+│   │   ├── WalletGenerator.tsx    # Main wallet generation UI
+│   │   ├── VerifyWallet.tsx       # Wallet lookup UI
+│   │   └── ...
+│   ├── pages/               # Page components
+│   └── lib/                 # Utility functions
+├── supabase/
+│   └── functions/           # Edge functions (serverless)
+│       ├── generate-wallet/       # Wallet generation logic
+│       ├── send-verification-code/ # Email verification
+│       └── verify-wallet/         # Wallet lookup
+└── public/                  # Static assets
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The following environment variables are required:
 
-**Use GitHub Codespaces**
+| Variable | Description |
+|----------|-------------|
+| `RESEND_API_KEY` | API key for Resend email service |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📊 Database Schema
 
-## What technologies are used for this project?
+### `wallets` Table
 
-This project is built with:
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `email` | TEXT | User's email address |
+| `public_key` | TEXT | Solana public key (wallet address) |
+| `confirmed` | BOOLEAN | Whether email is verified |
+| `source` | TEXT | Origin of wallet creation |
+| `created_at` | TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | Last update timestamp |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### `email_verifications` Table
 
-## How can I deploy this project?
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `email` | TEXT | Email being verified |
+| `code` | TEXT | 6-digit verification code |
+| `verified` | BOOLEAN | Verification status |
+| `expires_at` | TIMESTAMP | Code expiration time |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 🤝 Contributing
 
-## Can I connect a custom domain to my Lovable project?
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-Yes, you can!
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📄 License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is open source and available under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+- Built with [Lovable](https://lovable.dev)
+- Powered by [Supabase](https://supabase.com)
+- Email delivery by [Resend](https://resend.com)
+- Solana libraries by [@solana/web3.js](https://github.com/solana-labs/solana-web3.js)
+
+---
+
+<p align="center">
+  Made with ❤️ for the Solana community
+</p>
