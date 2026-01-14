@@ -344,7 +344,14 @@ export const WalletGenerator = () => {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Public Key</p>
                   <div className="flex items-center gap-2">
-                    <p className="font-mono text-sm text-foreground break-all flex-1">{generatedAddress}</p>
+                    <a
+                      href={`https://solscan.io/account/${generatedAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-sm text-primary hover:text-primary/80 transition-colors break-all flex-1"
+                    >
+                      {generatedAddress}
+                    </a>
                     <button
                       onClick={() => copyToClipboard(generatedAddress)}
                       className="p-2 rounded-lg hover:bg-muted transition-colors"
