@@ -46,12 +46,6 @@ export const VerificationCertificate = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const maskEmail = (email: string) => {
-    const [local, domain] = email.split("@");
-    if (local.length <= 2) return `${local[0]}***@${domain}`;
-    return `${local.slice(0, 2)}***@${domain}`;
-  };
-
   const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -75,7 +69,7 @@ Generated: ${new Date().toISOString()}
 Public Key:
 ${publicKey}
 
-Associated Email: ${searchedBy === "publicKey" ? maskEmail(email) : email}
+Associated Email: ${email}
 ${source ? `Source: ${source}` : ""}
 Creation Date: ${formattedDate}
 Status: ${confirmed ? "✓ CONFIRMED" : "○ PENDING CONFIRMATION"}
@@ -147,9 +141,7 @@ ${generateShareableLink()}
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Email</span>
-                <span className="text-foreground text-xs">
-                  {searchedBy === "publicKey" ? maskEmail(email) : email}
-                </span>
+                <span className="text-foreground text-xs">{email}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Created</span>
