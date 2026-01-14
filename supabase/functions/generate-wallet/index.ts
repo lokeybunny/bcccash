@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as ed from "https://esm.sh/@noble/ed25519@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,37 +47,51 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   return { allowed: true };
 }
 
-function generateSolanaKeypair(): { publicKey: string; privateKey: string; secretKeyArray: number[] } {
-  const secretKey = new Uint8Array(64);
-  crypto.getRandomValues(secretKey);
-  
-  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  
-  function encodeBase58(bytes: Uint8Array): string {
-    const digits = [0];
-    for (let i = 0; i < bytes.length; i++) {
-      let carry = bytes[i];
-      for (let j = 0; j < digits.length; j++) {
-        carry += digits[j] << 8;
-        digits[j] = carry % 58;
-        carry = (carry / 58) | 0;
-      }
-      while (carry > 0) {
-        digits.push(carry % 58);
-        carry = (carry / 58) | 0;
-      }
+const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function encodeBase58(bytes: Uint8Array): string {
+  const digits = [0];
+  for (let i = 0; i < bytes.length; i++) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
     }
-    let str = '';
-    for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-      str += ALPHABET[0];
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = (carry / 58) | 0;
     }
-    for (let i = digits.length - 1; i >= 0; i--) {
-      str += ALPHABET[digits[i]];
-    }
-    return str;
   }
+  let str = '';
+  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+    str += ALPHABET[0];
+  }
+  for (let i = digits.length - 1; i >= 0; i--) {
+    str += ALPHABET[digits[i]];
+  }
+  return str;
+}
+
+// Configure noble/ed25519 to use Web Crypto API
+ed.etc.sha512Sync = undefined;
+ed.etc.sha512Async = async (message: Uint8Array): Promise<Uint8Array> => {
+  const hashBuffer = await crypto.subtle.digest('SHA-512', new Uint8Array(message) as unknown as ArrayBuffer);
+  return new Uint8Array(hashBuffer);
+};
+
+async function generateSolanaKeypair(): Promise<{ publicKey: string; privateKey: string; secretKeyArray: number[] }> {
+  // Generate 32 random bytes as the private key seed
+  const privateKeySeed = new Uint8Array(32);
+  crypto.getRandomValues(privateKeySeed);
   
-  const publicKeyBytes = secretKey.slice(32, 64);
+  // Derive the public key from the private key seed using Ed25519
+  const publicKeyBytes = await ed.getPublicKeyAsync(privateKeySeed);
+  
+  // Solana's secret key format is 64 bytes: [32 bytes private seed] + [32 bytes public key]
+  const secretKey = new Uint8Array(64);
+  secretKey.set(privateKeySeed, 0);
+  secretKey.set(publicKeyBytes, 32);
   
   return {
     publicKey: encodeBase58(publicKeyBytes),
@@ -220,8 +235,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Generate new Solana keypair
-    const { publicKey, privateKey, secretKeyArray } = generateSolanaKeypair();
+    // Generate new Solana keypair using proper Ed25519 cryptography
+    const { publicKey, privateKey, secretKeyArray } = await generateSolanaKeypair();
 
     // Store wallet in database
     const { error: insertError } = await supabase
