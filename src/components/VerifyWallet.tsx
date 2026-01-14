@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Shield, Copy, CheckCircle2, XCircle, Mail, Key } from "lucide-react";
+import { Search, Shield, Copy, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -14,25 +14,27 @@ interface WalletResult {
   searchedBy: "email" | "publicKey";
 }
 
-type SearchType = "email" | "publicKey";
-
 export const VerifyWallet = () => {
   const [searchValue, setSearchValue] = useState("");
-  const [searchType, setSearchType] = useState<SearchType>("email");
   const [isSearching, setIsSearching] = useState(false);
   const [result, setResult] = useState<WalletResult | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [notFoundMessage, setNotFoundMessage] = useState("");
 
+  const isEmail = (value: string) => {
+    return value.includes("@") && value.includes(".");
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!searchValue) {
-      toast.error(`Please enter ${searchType === "email" ? "an email address" : "a public key"}`);
+    if (!searchValue.trim()) {
+      toast.error("Please enter an email address or public key");
       return;
     }
 
     const client = getBackendClient();
+    const searchType = isEmail(searchValue) ? "email" : "publicKey";
 
     setIsSearching(true);
     setNotFound(false);
@@ -41,8 +43,8 @@ export const VerifyWallet = () => {
 
     try {
       const body = searchType === "email" 
-        ? { email: searchValue } 
-        : { publicKey: searchValue };
+        ? { email: searchValue.trim() } 
+        : { publicKey: searchValue.trim() };
 
       const { data, error } = await client.functions.invoke("verify-wallet", {
         body,
@@ -104,49 +106,15 @@ export const VerifyWallet = () => {
           </div>
         </div>
 
-        {/* Search Type Toggle */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            type="button"
-            variant={searchType === "email" ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setSearchType("email");
-              setSearchValue("");
-              setResult(null);
-              setNotFound(false);
-            }}
-            className="flex-1 gap-2"
-          >
-            <Mail className="w-4 h-4" />
-            Email
-          </Button>
-          <Button
-            type="button"
-            variant={searchType === "publicKey" ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setSearchType("publicKey");
-              setSearchValue("");
-              setResult(null);
-              setNotFound(false);
-            }}
-            className="flex-1 gap-2"
-          >
-            <Key className="w-4 h-4" />
-            Public Key
-          </Button>
-        </div>
-
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              type={searchType === "email" ? "email" : "text"}
-              placeholder={searchType === "email" ? "Search by email..." : "Search by public key..."}
+              type="text"
+              placeholder="Enter email or public key..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="pl-12 h-14 text-lg font-mono"
+              className="pl-12 h-14 text-lg"
               disabled={isSearching}
             />
           </div>
