@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 import { BCCLogo } from "@/components/BCCLogo";
+import { toast } from "sonner";
 
 // X (Twitter) logo component
 const XIcon = ({ className }: { className?: string }) => (
@@ -17,8 +20,19 @@ const socialLinks = [
   { icon: XIcon, href: "https://twitter.com/BCCcash", label: "X (Twitter)" },
 ];
 
+// Placeholder pump.fun Solana CA - replace with actual address
+const PUMP_CA = "BCCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [copied, setCopied] = useState(false);
+
+  const copyCA = () => {
+    navigator.clipboard.writeText(PUMP_CA);
+    setCopied(true);
+    toast.success("Contract address copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <footer className="border-t border-border/50 bg-background/80 backdrop-blur-sm">
@@ -77,6 +91,24 @@ export const Footer = () => {
                 <social.icon className="w-5 h-5" />
               </a>
             ))}
+          </div>
+
+          {/* Pump CA Address */}
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-xs text-muted-foreground">$BCC Contract Address</p>
+            <button
+              onClick={copyCA}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors group"
+            >
+              <span className="font-mono text-xs text-foreground/80 group-hover:text-foreground transition-colors">
+                {PUMP_CA.slice(0, 8)}...{PUMP_CA.slice(-8)}
+              </span>
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-green-500" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              )}
+            </button>
           </div>
         </div>
 
