@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Shield, Lock, Eye, Server, Mail, Code } from "lucide-react";
+import { ChevronDown, Shield, Lock, Eye, Server, Mail, Code, FileText } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -9,6 +9,11 @@ import {
 } from "@/components/ui/accordion";
 
 const faqs = [
+  {
+    icon: FileText,
+    question: "What does BCC stand for?",
+    answer: "BCC stands for 'Blind Carbon Copy' — the email feature that lets you send messages without revealing recipients to each other. Just like BCC keeps email addresses private and hidden, BCC.cash keeps your private keys private. We generate your wallet, deliver the key securely to your email, and then forget it ever existed. Your keys stay blind to everyone but you.",
+  },
   {
     icon: Lock,
     question: "Are private keys stored on your servers?",
