@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Copy, Users } from "lucide-react";
+import { ExternalLink, Copy, Users, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -12,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface OnboardEntry {
   id: number;
@@ -21,19 +23,7 @@ interface OnboardEntry {
   publicKey: string;
   verified: boolean;
   source?: string;
-  avatar?: string;
 }
-
-// Generate avatar URL using UI Avatars service
-const getAvatarUrl = (name: string, type: OnboardEntry["type"]) => {
-  const colors: Record<OnboardEntry["type"], string> = {
-    celebrity: "9333ea",
-    organization: "3b82f6",
-    influencer: "f59e0b",
-    brand: "10b981",
-  };
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${colors[type]}&color=fff&size=128&bold=true`;
-};
 
 const placeholderData: OnboardEntry[] = [
   {
@@ -44,7 +34,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     verified: true,
     source: "https://x.com/elonmusk",
-    avatar: "https://pbs.twimg.com/profile_images/1893803697185910784/Na5lOWi5_400x400.jpg",
   },
   {
     id: 2,
@@ -54,7 +43,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "Czbmb7osZxLaX5vGHuXMS2mkdtZEXyTNKwsAUUpLGhkG",
     verified: true,
     source: "https://x.com/SnoopDogg",
-    avatar: "https://pbs.twimg.com/profile_images/1886891539030028288/PfDmhCAL_400x400.jpg",
   },
   {
     id: 3,
@@ -64,7 +52,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
     verified: true,
     source: "https://x.com/ParisHilton",
-    avatar: "https://pbs.twimg.com/profile_images/1869217975397179392/2Z0qnbgp_400x400.jpg",
   },
   {
     id: 4,
@@ -74,7 +61,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
     verified: true,
     source: "https://x.com/garyvee",
-    avatar: "https://pbs.twimg.com/profile_images/1587589349809913857/0k1Dk9wC_400x400.jpg",
   },
   {
     id: 5,
@@ -84,7 +70,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "So11111111111111111111111111111111111111112",
     verified: true,
     source: "https://solana.org",
-    avatar: "https://pbs.twimg.com/profile_images/1853893043763748864/RmQG1L1e_400x400.png",
   },
   {
     id: 6,
@@ -94,7 +79,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "MEisE1HzehtrDpAAT8PnLHjpSSkRYakotTuJRPjTpo8",
     verified: true,
     source: "https://magiceden.io",
-    avatar: "https://pbs.twimg.com/profile_images/1893000499164319744/uvNdqA7a_400x400.jpg",
   },
   {
     id: 7,
@@ -104,7 +88,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "AoKi1tFn7cEzWJFp8qx8E8Q8WpYv4sLx6A8zd4SdMxNK",
     verified: true,
     source: "https://x.com/steveaoki",
-    avatar: "https://pbs.twimg.com/profile_images/1864108599708white48/IVP2Bjlj_400x400.jpg",
   },
   {
     id: 8,
@@ -114,7 +97,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "RariZLy8aZ88GJMncG7hRQ4J8TerNf59sFvFxkv2Dqd",
     verified: true,
     source: "https://rarible.com",
-    avatar: "https://pbs.twimg.com/profile_images/1657774560627695617/lqg7MRVs_400x400.jpg",
   },
   {
     id: 9,
@@ -124,7 +106,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "PhntmWaLLet111111111111111111111111111111111",
     verified: true,
     source: "https://phantom.app",
-    avatar: "https://pbs.twimg.com/profile_images/1882828253233819648/J3xGqfcO_400x400.jpg",
   },
   {
     id: 10,
@@ -134,7 +115,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "CubanMark2023xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: false,
     source: "https://x.com/mcuban",
-    avatar: "https://pbs.twimg.com/profile_images/1720232273881788416/u0TtIKxM_400x400.jpg",
   },
   {
     id: 11,
@@ -144,7 +124,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "OpenSea2024xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     verified: true,
     source: "https://opensea.io",
-    avatar: "https://pbs.twimg.com/profile_images/1893103127860838401/fNYaJOQX_400x400.jpg",
   },
   {
     id: 12,
@@ -154,7 +133,6 @@ const placeholderData: OnboardEntry[] = [
     publicKey: "BeepLe69MiLLioN111111111111111111111111111",
     verified: true,
     source: "https://x.com/beeple",
-    avatar: "https://pbs.twimg.com/profile_images/1407418252576464899/QLqH5kXn_400x400.jpg",
   },
 ];
 
@@ -166,6 +144,8 @@ const typeColors: Record<OnboardEntry["type"], string> = {
 };
 
 const Onboard = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
@@ -174,6 +154,16 @@ const Onboard = () => {
   const truncateKey = (key: string) => {
     return `${key.slice(0, 6)}...${key.slice(-6)}`;
   };
+
+  const filteredData = placeholderData.filter((entry) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      entry.name.toLowerCase().includes(query) ||
+      entry.type.toLowerCase().includes(query) ||
+      entry.category.toLowerCase().includes(query) ||
+      entry.publicKey.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -198,6 +188,25 @@ const Onboard = () => {
           </p>
         </motion.div>
 
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-6 max-w-md mx-auto"
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by name, type, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-card/50 border-border/50"
+            />
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -215,32 +224,29 @@ const Onboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {placeholderData.map((entry, index) => (
-                <motion.tr
-                  key={entry.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="border-border/30 hover:bg-muted/30 transition-colors"
-                >
-                  <TableCell className="font-medium text-foreground">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={entry.avatar || getAvatarUrl(entry.name, entry.type)}
-                        alt={entry.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-border/50"
-                        onError={(e) => {
-                          e.currentTarget.src = getAvatarUrl(entry.name, entry.type);
-                        }}
-                      />
+              {filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No results found for "{searchQuery}"
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData.map((entry, index) => (
+                  <motion.tr
+                    key={entry.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="border-border/30 hover:bg-muted/30 transition-colors"
+                  >
+                    <TableCell className="font-medium text-foreground">
                       <div className="flex items-center gap-2">
                         <span>{entry.name}</span>
                         {entry.verified && (
                           <span className="text-primary text-xs">✓</span>
                         )}
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
@@ -280,7 +286,8 @@ const Onboard = () => {
                     )}
                   </TableCell>
                 </motion.tr>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </motion.div>
