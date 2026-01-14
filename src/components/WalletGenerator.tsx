@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Mail, Wallet, ArrowRight, Check, Loader2, Copy, AlertTriangle, ShieldAlert, Inbox } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -367,6 +367,19 @@ export const WalletGenerator = () => {
                   </span>
                 </div>
               </div>
+
+              {!isExistingWallet && (
+                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Inbox className="w-4 h-4" />
+                    <span className="text-sm font-medium">Check Your Spam Folder</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The email containing the private key may end up in the recipient's spam or junk folder. 
+                    Please ask them to check there if they don't see it in their inbox.
+                  </p>
+                </div>
+              )}
 
               {isExistingWallet && (
                 <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
