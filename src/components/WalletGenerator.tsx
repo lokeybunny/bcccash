@@ -106,8 +106,18 @@ export const WalletGenerator = () => {
         return;
       }
 
-      // Handle successful response
-      if (data?.publicKey && !data?.error) {
+      // Handle existing wallet
+      if (data?.exists) {
+        setProgressStep("done");
+        toast.info("This email has already been converted into a wallet");
+        setGeneratedAddress(data.publicKey);
+        setStep("success");
+        setIsExistingWallet(true);
+        return;
+      }
+
+      // Handle successful new wallet creation
+      if (data?.success && data?.publicKey) {
         setProgressStep("done");
         setGeneratedAddress(data.publicKey);
         setStep("success");
@@ -115,17 +125,9 @@ export const WalletGenerator = () => {
         return;
       }
 
-      // Handle existing wallet
+      // Handle errors
       if (data?.error) {
-        if (data.publicKey) {
-          setProgressStep("done");
-          toast.info("A wallet already exists for this email");
-          setGeneratedAddress(data.publicKey);
-          setStep("success");
-          setIsExistingWallet(true);
-        } else {
-          toast.error(data.error);
-        }
+        toast.error(data.error);
         return;
       }
 
@@ -283,12 +285,12 @@ export const WalletGenerator = () => {
             >
               <div className="flex items-center gap-2 text-sm text-green-400">
                 <Check className="w-4 h-4" />
-                <span>{isExistingWallet ? "Wallet found" : "Wallet created successfully"}</span>
+                <span>{isExistingWallet ? "Email already converted" : "Wallet created successfully"}</span>
               </div>
               
               <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Recipient Email</p>
+                  <p className="text-xs text-muted-foreground mb-1">Email</p>
                   <p className="text-sm text-foreground">{email}</p>
                 </div>
                 <div>
@@ -305,8 +307,8 @@ export const WalletGenerator = () => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Status</p>
-                  <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
-                    {isExistingWallet ? "Existing Wallet" : "Created & Sent"}
+                  <span className={`text-xs px-2 py-1 rounded-full ${isExistingWallet ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
+                    {isExistingWallet ? "Previously Created" : "Created & Sent"}
                   </span>
                 </div>
               </div>
@@ -315,11 +317,11 @@ export const WalletGenerator = () => {
                 <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                   <div className="flex items-center gap-2 text-amber-500">
                     <ShieldAlert className="w-4 h-4" />
-                    <span className="text-sm font-medium">Security Notice</span>
+                    <span className="text-sm font-medium">Private Key Cannot Be Resent</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    For security, private keys are never stored and can only be sent once during wallet creation. 
-                    If you've lost access to the private key, the wallet cannot be recovered.
+                    This email was already converted into a wallet. For security, private keys are never stored 
+                    and were only sent once during the original wallet creation. No emails can be resent.
                   </p>
                 </div>
               )}

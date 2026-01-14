@@ -229,8 +229,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (existingWallet) {
       return new Response(
         JSON.stringify({
-          error: "A wallet already exists for this email address",
+          exists: true,
+          message: "This email has already been converted into a wallet",
           publicKey: existingWallet.public_key,
+          createdAt: existingWallet.created_at,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
