@@ -36,7 +36,7 @@ export const Header = () => {
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center transition-transform duration-200 hover:scale-110">
-          <img src={bccLogo} alt="BCC.cash" className="w-11 h-11 object-contain" />
+          <img src={bccLogo} alt="BCC.cash" className="w-32 h-32 object-contain" />
         </Link>
         
         {/* Desktop Navigation */}
