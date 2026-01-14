@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Look up wallet by email or public key
     let query = supabase
       .from("wallets")
-      .select("email, public_key, confirmed, created_at");
+      .select("email, public_key, confirmed, created_at, source");
     
     if (publicKey) {
       query = query.eq("public_key", publicKey);
@@ -154,6 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
         publicKey: wallet.public_key,
         confirmed: wallet.confirmed,
         createdAt: wallet.created_at,
+        source: wallet.source,
         searchedBy: publicKey ? "publicKey" : "email"
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }

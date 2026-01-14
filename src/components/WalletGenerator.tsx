@@ -33,11 +33,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const WalletGenerator = () => {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
+  const [source, setSource] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isExistingWallet, setIsExistingWallet] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
+  const [walletSource, setWalletSource] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState<ProgressStep>("idle");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
@@ -100,7 +102,7 @@ export const WalletGenerator = () => {
       setProgressStep("sending");
 
       const { data, error } = await client.functions.invoke("generate-wallet", {
-        body: { email },
+        body: { email, source: source.trim() || undefined },
       });
 
       // Handle rate limiting
@@ -197,9 +199,11 @@ export const WalletGenerator = () => {
   const resetForm = () => {
     setStep("email");
     setEmail("");
+    setSource("");
     setEmailTouched(false);
     setIsExistingWallet(false);
     setGeneratedAddress("");
+    setWalletSource(null);
     setProgressStep("idle");
     setIsCaptchaVerified(false);
     setCaptchaKey(prev => prev + 1);
@@ -271,6 +275,20 @@ export const WalletGenerator = () => {
                 {emailTouched && email && !emailValidation.isValid && (
                   <p className="text-xs text-destructive pl-1">{emailValidation.message}</p>
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <Input
+                  type="text"
+                  placeholder="Source (optional) - e.g., Twitter, LinkedIn, GitHub"
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="h-12"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground pl-1">
+                  Where was this email publicly found?
+                </p>
               </div>
               
               <Button

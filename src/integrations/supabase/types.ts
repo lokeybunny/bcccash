@@ -50,6 +50,7 @@ export type Database = {
           last_email_sent_at: string | null
           public_key: string
           secret_key: Json | null
+          source: string | null
           updated_at: string
         }
         Insert: {
@@ -60,6 +61,7 @@ export type Database = {
           last_email_sent_at?: string | null
           public_key: string
           secret_key?: Json | null
+          source?: string | null
           updated_at?: string
         }
         Update: {
@@ -70,6 +72,7 @@ export type Database = {
           last_email_sent_at?: string | null
           public_key?: string
           secret_key?: Json | null
+          source?: string | null
           updated_at?: string
         }
         Relationships: []

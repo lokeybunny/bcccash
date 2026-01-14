@@ -11,6 +11,7 @@ interface WalletResult {
   publicKey: string;
   confirmed: boolean;
   createdAt: string;
+  source: string | null;
   searchedBy: "email" | "publicKey";
 }
 
@@ -67,6 +68,7 @@ export const VerifyWallet = () => {
         publicKey: data.publicKey,
         confirmed: data.confirmed,
         createdAt: data.createdAt,
+        source: data.source,
         searchedBy: data.searchedBy,
       });
     } catch (error: any) {
@@ -194,6 +196,14 @@ export const VerifyWallet = () => {
                   </div>
                 </>
               )}
+              
+              {result.source && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Source</p>
+                  <p className="text-sm text-foreground">{result.source}</p>
+                </div>
+              )}
+              
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Created</p>
