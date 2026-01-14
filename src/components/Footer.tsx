@@ -17,7 +17,7 @@ const XIcon = ({ className }: { className?: string }) => (
 );
 
 const socialLinks = [
-  { icon: XIcon, href: "https://twitter.com/BCCcash", label: "X (Twitter)" },
+  { icon: XIcon, href: "https://x.com/BCCcash", label: "X" },
 ];
 
 // Placeholder pump.fun Solana CA - replace with actual address
