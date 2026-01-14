@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { BCCLogo } from "@/components/BCCLogo";
 import { Github, Twitter } from "lucide-react";
 
@@ -14,36 +15,42 @@ export const Footer = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo and Copyright */}
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <a href="/" className="flex items-center gap-2">
+          <div className="flex flex-col items-center md:items-start gap-2 text-center md:text-left">
+            <Link to="/" className="flex items-center gap-2">
               <BCCLogo className="w-8 h-8 text-foreground" />
               <span className="font-semibold text-foreground">BCC.cash</span>
-            </a>
+            </Link>
             <p className="text-sm text-muted-foreground">
               © {currentYear} BCC.cash. All rights reserved.
             </p>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex items-center gap-6">
+          <nav className="flex flex-wrap items-center justify-center gap-6">
             <a
-              href="#generate"
+              href="/#generate"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Generate
             </a>
             <a
-              href="#verify"
+              href="/#verify"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Verify
             </a>
             <a
-              href="#features"
+              href="/#features"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               How It Works
             </a>
+            <Link
+              to="/onboard"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Onboard
+            </Link>
           </nav>
 
           {/* Social Links */}
