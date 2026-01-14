@@ -102,6 +102,70 @@ async function generateSolanaKeypair(): Promise<{ publicKey: string; privateKey:
   };
 }
 
+// Verify email domain has valid MX records
+async function verifyEmailDomain(email: string): Promise<{ valid: boolean; reason?: string }> {
+  try {
+    const domain = email.split("@")[1];
+    if (!domain) {
+      return { valid: false, reason: "Invalid email format" };
+    }
+
+    // Check common disposable email domains
+    const disposableDomains = [
+      "tempmail.com", "throwaway.email", "guerrillamail.com", "10minutemail.com",
+      "mailinator.com", "yopmail.com", "temp-mail.org", "fakeinbox.com",
+      "getnada.com", "maildrop.cc", "dispostable.com", "sharklasers.com"
+    ];
+    
+    if (disposableDomains.includes(domain.toLowerCase())) {
+      return { valid: false, reason: "Disposable email addresses are not allowed" };
+    }
+
+    // Use Google's DNS-over-HTTPS to check MX records
+    const dnsResponse = await fetch(
+      `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`,
+      { headers: { "Accept": "application/dns-json" } }
+    );
+
+    if (!dnsResponse.ok) {
+      // If DNS lookup fails, allow the email (fail open for availability)
+      console.warn(`DNS lookup failed for ${domain}, allowing email`);
+      return { valid: true };
+    }
+
+    const dnsData = await dnsResponse.json();
+    
+    // Status 0 = NOERROR, 3 = NXDOMAIN (domain doesn't exist)
+    if (dnsData.Status === 3) {
+      return { valid: false, reason: "Email domain does not exist" };
+    }
+
+    // Check if MX records exist
+    if (!dnsData.Answer || dnsData.Answer.length === 0) {
+      // No MX records - check for A record as fallback (some domains use A record for mail)
+      const aRecordResponse = await fetch(
+        `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`,
+        { headers: { "Accept": "application/dns-json" } }
+      );
+      
+      if (aRecordResponse.ok) {
+        const aData = await aRecordResponse.json();
+        if (aData.Answer && aData.Answer.length > 0) {
+          return { valid: true }; // Has A record, might accept mail
+        }
+      }
+      
+      return { valid: false, reason: "Email domain cannot receive emails (no mail server found)" };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    console.error("Email verification error:", error);
+    // Fail open - if verification fails, allow the email
+    return { valid: true };
+  }
+}
+
 async function sendEmail(to: string, publicKey: string, privateKey: string, secretKeyArray: number[]): Promise<void> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   
@@ -248,6 +312,15 @@ const handler = async (req: Request): Promise<Response> => {
     if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_REGEX.test(email)) {
       return new Response(
         JSON.stringify({ error: "Valid email address is required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Verify email domain can receive emails (MX record check)
+    const emailVerification = await verifyEmailDomain(email);
+    if (!emailVerification.valid) {
+      return new Response(
+        JSON.stringify({ error: emailVerification.reason || "Invalid email domain" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
