@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-import { Download, Image, RefreshCw, X } from "lucide-react";
+import { Download, Image, RefreshCw, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,48 +14,71 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+// Import branded backgrounds
+import cardBg1 from "@/assets/card-bg-1.png";
+import cardBg2 from "@/assets/card-bg-2.png";
+import cardBg3 from "@/assets/card-bg-3.png";
+import bccLogo from "@/assets/bcc-logo.png";
+
 interface WalletCardProps {
   publicKey: string;
   email: string;
   source?: string;
 }
 
-const BACKGROUND_OPTIONS = [
+type BackgroundOption = {
+  id: string;
+  name: string;
+  type: "gradient" | "image";
+  style?: string;
+  image?: string;
+};
+
+const BACKGROUND_OPTIONS: BackgroundOption[] = [
+  // Branded BCC backgrounds first
+  {
+    id: "bcc-brand-1",
+    name: "BCC Email",
+    type: "image",
+    image: cardBg1,
+  },
+  {
+    id: "bcc-brand-2",
+    name: "BCC Wallet",
+    type: "image",
+    image: cardBg2,
+  },
+  {
+    id: "bcc-brand-3",
+    name: "BCC Bitcoin",
+    type: "image",
+    image: cardBg3,
+  },
+  // Gradient options
   {
     id: "gradient-purple",
     name: "Purple Wave",
+    type: "gradient",
     style: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
   },
   {
     id: "gradient-ocean",
     name: "Ocean",
+    type: "gradient",
     style: "linear-gradient(135deg, #0093E9 0%, #80D0C7 100%)",
-  },
-  {
-    id: "gradient-sunset",
-    name: "Sunset",
-    style: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-  },
-  {
-    id: "gradient-forest",
-    name: "Forest",
-    style: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
   },
   {
     id: "gradient-night",
     name: "Night Sky",
+    type: "gradient",
     style: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
-  },
-  {
-    id: "gradient-fire",
-    name: "Fire",
-    style: "linear-gradient(135deg, #f12711 0%, #f5af19 100%)",
   },
 ];
 
 export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
   const [selectedBg, setSelectedBg] = useState(BACKGROUND_OPTIONS[0]);
   const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
+  const [showWatermark, setShowWatermark] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -109,7 +133,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
     }
   }, [publicKey]);
 
-  const getBackgroundStyle = () => {
+  const getBackgroundStyle = (): React.CSSProperties => {
     if (customBgUrl) {
       return {
         backgroundImage: `url(${customBgUrl})`,
@@ -117,7 +141,25 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
         backgroundPosition: "center",
       };
     }
+    if (selectedBg.type === "image" && selectedBg.image) {
+      return {
+        backgroundImage: `url(${selectedBg.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
     return { background: selectedBg.style };
+  };
+
+  const getPreviewStyle = (bg: BackgroundOption): React.CSSProperties => {
+    if (bg.type === "image" && bg.image) {
+      return {
+        backgroundImage: `url(${bg.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+    return { background: bg.style };
   };
 
   return (
@@ -140,23 +182,53 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
           {/* Background Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">Choose Background</label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {BACKGROUND_OPTIONS.map((bg) => (
-                <button
-                  key={bg.id}
-                  onClick={() => {
-                    setSelectedBg(bg);
-                    clearCustomBg();
-                  }}
-                  className={`aspect-square rounded-lg border-2 transition-all ${
-                    selectedBg.id === bg.id && !customBgUrl
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-border hover:border-muted-foreground"
-                  }`}
-                  style={{ background: bg.style }}
-                  title={bg.name}
-                />
-              ))}
+            
+            {/* BCC Branded Backgrounds */}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> BCC Branded
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {BACKGROUND_OPTIONS.filter(bg => bg.type === "image").map((bg) => (
+                  <button
+                    key={bg.id}
+                    onClick={() => {
+                      setSelectedBg(bg);
+                      clearCustomBg();
+                    }}
+                    className={`aspect-video rounded-lg border-2 transition-all overflow-hidden ${
+                      selectedBg.id === bg.id && !customBgUrl
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "border-border hover:border-muted-foreground"
+                    }`}
+                    style={getPreviewStyle(bg)}
+                    title={bg.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Gradient Backgrounds */}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Gradients</p>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {BACKGROUND_OPTIONS.filter(bg => bg.type === "gradient").map((bg) => (
+                  <button
+                    key={bg.id}
+                    onClick={() => {
+                      setSelectedBg(bg);
+                      clearCustomBg();
+                    }}
+                    className={`aspect-square rounded-lg border-2 transition-all ${
+                      selectedBg.id === bg.id && !customBgUrl
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "border-border hover:border-muted-foreground"
+                    }`}
+                    style={getPreviewStyle(bg)}
+                    title={bg.name}
+                  />
+                ))}
+              </div>
             </div>
             
             {/* Custom Upload */}
@@ -187,6 +259,24 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
             </div>
           </div>
 
+          {/* Watermark Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+            <div className="flex items-center gap-3">
+              <img src={bccLogo} alt="BCC Logo" className="w-8 h-8 rounded" />
+              <div>
+                <Label htmlFor="watermark-toggle" className="text-sm font-medium">
+                  Show Logo Watermark
+                </Label>
+                <p className="text-xs text-muted-foreground">Display BCC logo on the card</p>
+              </div>
+            </div>
+            <Switch
+              id="watermark-toggle"
+              checked={showWatermark}
+              onCheckedChange={setShowWatermark}
+            />
+          </div>
+
           {/* Card Preview */}
           <div className="flex justify-center">
             <div
@@ -194,17 +284,24 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
               className="relative w-[400px] h-[250px] rounded-2xl overflow-hidden shadow-2xl"
               style={getBackgroundStyle()}
             >
-              {/* Overlay for readability */}
-              <div className="absolute inset-0 bg-black/30" />
+              {/* Overlay for readability - lighter for branded images */}
+              <div className={`absolute inset-0 ${selectedBg.type === "image" || customBgUrl ? "bg-black/20" : "bg-black/30"}`} />
+              
+              {/* Logo Watermark */}
+              {showWatermark && (
+                <div className="absolute top-3 left-3 z-10">
+                  <img 
+                    src={bccLogo} 
+                    alt="BCC Cash" 
+                    className="w-12 h-12 rounded-lg shadow-lg"
+                  />
+                </div>
+              )}
               
               {/* Card Content */}
               <div className="relative h-full p-5 flex flex-col justify-between text-white">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold tracking-wide">BCC WALLET</h3>
-                    <p className="text-xs opacity-80">Solana Wallet Card</p>
-                  </div>
+                <div className="flex items-center justify-end">
                   <div className="text-right">
                     <p className="text-[10px] opacity-60 uppercase tracking-wider">Powered by</p>
                     <p className="text-xs font-semibold">bcccash.cash</p>
@@ -216,7 +313,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                   {/* QR Codes */}
                   <div className="flex gap-3">
                     {/* Wallet QR */}
-                    <div className="bg-white p-2 rounded-lg">
+                    <div className="bg-white p-2 rounded-lg shadow-lg">
                       <QRCodeSVG
                         value={`solana:${publicKey}`}
                         size={70}
@@ -228,7 +325,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
 
                     {/* Source QR (if available) */}
                     {source && (
-                      <div className="bg-white p-2 rounded-lg">
+                      <div className="bg-white p-2 rounded-lg shadow-lg">
                         <QRCodeSVG
                           value={source.startsWith("http") ? source : `https://${source}`}
                           size={70}
