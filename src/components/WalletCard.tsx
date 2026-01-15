@@ -18,6 +18,7 @@ import cardBg2 from "@/assets/card-bg-2.png";
 import cardBg3 from "@/assets/card-bg-3.png";
 import cardBg4 from "@/assets/card-bg-4.png";
 import bccLogo from "@/assets/bcc-logo.png";
+import solanaLogo from "@/assets/solana-logo.png";
 
 interface WalletCardProps {
   publicKey: string;
@@ -243,8 +244,14 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                       <QRCodeSVG
                         value={`solana:${publicKey}`}
                         size={70}
-                        level="M"
+                        level="H"
                         includeMargin={false}
+                        imageSettings={{
+                          src: solanaLogo,
+                          height: 16,
+                          width: 16,
+                          excavate: true,
+                        }}
                       />
                       <p className="text-[8px] text-center text-black mt-1 font-medium">WALLET</p>
                     </div>
