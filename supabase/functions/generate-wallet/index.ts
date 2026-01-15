@@ -343,6 +343,7 @@ const handler = async (req: Request): Promise<Response> => {
           message: "This email has already been converted into a wallet",
           publicKey: existingWallet.public_key,
           createdAt: existingWallet.created_at,
+          source: existingWallet.source,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
