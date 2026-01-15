@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
-
+import { WalletCard } from "@/components/WalletCard";
 type Step = "email" | "success";
 type ProgressStep = "idle" | "generating" | "sending" | "done";
 
@@ -412,6 +412,15 @@ export const WalletGenerator = () => {
                   </p>
                 </div>
               )}
+
+              {/* Wallet Card Generator */}
+              <div className="pt-2">
+                <WalletCard 
+                  publicKey={generatedAddress} 
+                  email={email} 
+                  source={source || undefined} 
+                />
+              </div>
 
               <Button variant="outline" size="lg" className="w-full" onClick={resetForm}>
                 Generate Another Wallet
