@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import cardBg2 from "@/assets/card-bg-2.png";
@@ -9,10 +9,45 @@ import solanaLogo from "@/assets/solana-logo.png";
 const DEMO_PUBLIC_KEY = "7NP5JZrxZMRQ7WCJyvEpqh3M213zAqq9eLKfuMzggd8W";
 const DEMO_EMAIL = "dev@bcc.cash";
 
+// Particle configuration
+const PARTICLE_COUNT = 20;
+
+interface Particle {
+  id: number;
+  size: number;
+  x: number;
+  y: number;
+  duration: number;
+  delay: number;
+  color: string;
+}
+
+const generateParticles = (): Particle[] => {
+  const colors = [
+    "rgba(139, 92, 246, 0.6)",  // Purple
+    "rgba(6, 182, 212, 0.6)",   // Cyan
+    "rgba(168, 85, 247, 0.5)",  // Violet
+    "rgba(34, 211, 238, 0.5)",  // Light cyan
+    "rgba(192, 132, 252, 0.4)", // Light purple
+  ];
+  
+  return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+    id: i,
+    size: Math.random() * 6 + 2,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    duration: Math.random() * 8 + 6,
+    delay: Math.random() * 4,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+};
+
 export const ShowcaseWalletCard = () => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-
+  
+  // Generate particles once
+  const particles = useMemo(() => generateParticles(), []);
   // Motion values for mouse position
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -72,6 +107,36 @@ export const ShowcaseWalletCard = () => {
     >
       {/* Glow effect behind card */}
       <div className="absolute inset-0 blur-3xl bg-gradient-to-r from-primary/30 via-secondary/20 to-accent/30 rounded-3xl transform scale-110" />
+      
+      {/* Floating Particles */}
+      <div className="absolute inset-0 overflow-visible pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute rounded-full"
+            style={{
+              width: particle.size,
+              height: particle.size,
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              backgroundColor: particle.color,
+              boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
+            }}
+            animate={{
+              y: [0, -30, 0, 20, 0],
+              x: [0, 15, -10, 5, 0],
+              opacity: [0.3, 0.8, 0.5, 0.9, 0.3],
+              scale: [1, 1.2, 0.9, 1.1, 1],
+            }}
+            transition={{
+              duration: particle.duration,
+              delay: particle.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
       
       {/* Card Container with 3D tilt */}
       <motion.div
