@@ -1,5 +1,6 @@
+import { useState, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import cardBg2 from "@/assets/card-bg-2.png";
 import bccLogo from "@/assets/bcc-logo.png";
 import solanaLogo from "@/assets/solana-logo.png";
@@ -9,20 +10,65 @@ const DEMO_PUBLIC_KEY = "7NP5JZrxZMRQ7WCJyvEpqh3M213zAqq9eLKfuMzggd8W";
 const DEMO_EMAIL = "dev@bcc.cash";
 
 export const ShowcaseWalletCard = () => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Motion values for mouse position
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Spring config for smooth animation
+  const springConfig = { damping: 20, stiffness: 300 };
+  
+  // Transform mouse position to rotation values
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [15, -15]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-15, 15]), springConfig);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // Normalize mouse position to -0.5 to 0.5
+    const normalizedX = (e.clientX - centerX) / rect.width;
+    const normalizedY = (e.clientY - centerY) / rect.height;
+    
+    mouseX.set(normalizedX);
+    mouseY.set(normalizedY);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.8, delay: 0.5 }}
       className="relative mt-12"
+      style={{ perspective: 1000 }}
     >
       {/* Glow effect behind card */}
       <div className="absolute inset-0 blur-3xl bg-gradient-to-r from-primary/30 via-secondary/20 to-accent/30 rounded-3xl transform scale-110" />
       
-      {/* Card Container with perspective */}
+      {/* Card Container with 3D tilt */}
       <motion.div
-        className="relative"
-        whileHover={{ scale: 1.02, rotateY: 2 }}
+        ref={cardRef}
+        className="relative cursor-pointer"
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        whileHover={{ scale: 1.02 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
         {/* The Wallet Card - 2x larger */}
