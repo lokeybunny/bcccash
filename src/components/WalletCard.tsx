@@ -230,7 +230,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                 <div className="flex items-center justify-end">
                   <div className="text-right">
                     <p className="text-[10px] opacity-60 uppercase tracking-wider">Powered by</p>
-                    <p className="text-xs font-semibold">bcccash.cash</p>
+                    <p className="text-xs font-semibold">BCC.CASH</p>
                   </div>
                 </div>
 
