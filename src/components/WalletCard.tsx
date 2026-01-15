@@ -308,7 +308,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                 const tweetText = encodeURIComponent(
                   `🚀 Just created my Solana wallet with @BCCcash!\n\n` +
                   `Turn any email into a Solana wallet instantly.\n\n` +
-                  `🔗 bcccash.cash\n\n` +
+                  `🔗 BCC.CASH\n\n` +
                   `#Solana #Crypto #Web3 #BCCcash`
                 );
                 window.open(
