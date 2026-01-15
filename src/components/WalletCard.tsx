@@ -249,18 +249,16 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                       <p className="text-[8px] text-center text-black mt-1 font-medium">WALLET</p>
                     </div>
 
-                    {/* Source QR (if available) */}
-                    {source && (
-                      <div className="bg-white p-2 rounded-lg shadow-lg">
-                        <QRCodeSVG
-                          value={source.startsWith("http") ? source : `https://${source}`}
-                          size={70}
-                          level="M"
-                          includeMargin={false}
-                        />
-                        <p className="text-[8px] text-center text-black mt-1 font-medium">SOURCE</p>
-                      </div>
-                    )}
+                    {/* Email QR */}
+                    <div className="bg-white p-2 rounded-lg shadow-lg">
+                      <QRCodeSVG
+                        value={`mailto:${email}?subject=Your%20BCC.CASH%20Wallet`}
+                        size={70}
+                        level="M"
+                        includeMargin={false}
+                      />
+                      <p className="text-[8px] text-center text-black mt-1 font-medium">EMAIL</p>
+                    </div>
                   </div>
 
                   {/* User Info */}
