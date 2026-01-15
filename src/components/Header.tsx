@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import bccLogo from "@/assets/bcc-logo.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -53,6 +54,7 @@ export const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
+          <WalletConnectButton />
           <ThemeToggle />
           
           {/* Mobile Menu Button */}

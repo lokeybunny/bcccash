@@ -14,6 +14,94 @@ export type Database = {
   }
   public: {
     Tables: {
+      bcc_accounts: {
+        Row: {
+          bcc_username: string
+          created_at: string
+          forward_to_email: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          bcc_username: string
+          created_at?: string
+          forward_to_email: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          bcc_username?: string
+          created_at?: string
+          forward_to_email?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bcc_accounts_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bcc_emails: {
+        Row: {
+          bcc_account_id: string
+          body_html: string | null
+          body_text: string | null
+          forwarded_at: string | null
+          from_email: string
+          from_name: string | null
+          id: string
+          is_forwarded: boolean
+          is_read: boolean
+          received_at: string
+          subject: string | null
+        }
+        Insert: {
+          bcc_account_id: string
+          body_html?: string | null
+          body_text?: string | null
+          forwarded_at?: string | null
+          from_email: string
+          from_name?: string | null
+          id?: string
+          is_forwarded?: boolean
+          is_read?: boolean
+          received_at?: string
+          subject?: string | null
+        }
+        Update: {
+          bcc_account_id?: string
+          body_html?: string | null
+          body_text?: string | null
+          forwarded_at?: string | null
+          from_email?: string
+          from_name?: string | null
+          id?: string
+          is_forwarded?: boolean
+          is_read?: boolean
+          received_at?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bcc_emails_bcc_account_id_fkey"
+            columns: ["bcc_account_id"]
+            isOneToOne: false
+            referencedRelation: "bcc_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_verifications: {
         Row: {
           code: string
