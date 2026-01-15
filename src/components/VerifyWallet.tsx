@@ -31,12 +31,19 @@ export const VerifyWallet = () => {
     const verifyKey = params.get("verify");
     if (verifyKey) {
       setSearchValue(verifyKey);
-      // Auto-trigger search after a short delay
+      // Scroll to verify section
       setTimeout(() => {
+        const verifySection = document.getElementById("verify");
+        if (verifySection) {
+          verifySection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        // Trigger search after scrolling
         verifyWallet(verifyKey);
-      }, 500);
-      // Clean up URL
-      window.history.replaceState({}, "", window.location.pathname);
+      }, 300);
+      // Clean up URL after a short delay to allow the search to complete
+      setTimeout(() => {
+        window.history.replaceState({}, "", window.location.pathname);
+      }, 1000);
     }
   }, []);
 
