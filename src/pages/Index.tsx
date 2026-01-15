@@ -7,7 +7,7 @@ import { VerifyWallet } from "@/components/VerifyWallet";
 import { Features } from "@/components/Features";
 import { FAQ } from "@/components/FAQ";
 import { GlowOrb } from "@/components/GlowOrb";
-
+import { ShowcaseWalletCard } from "@/components/ShowcaseWalletCard";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -60,6 +60,9 @@ const Index = () => {
               <span>Get Started</span>
               <ArrowDown className="w-4 h-4 animate-bounce" />
             </motion.a>
+
+            {/* Showcase Wallet Card */}
+            <ShowcaseWalletCard />
           </motion.div>
         </div>
       </section>
