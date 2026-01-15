@@ -117,33 +117,63 @@ serve(async (req: Request) => {
 
     // Forward email to original address using Resend
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (resendApiKey) {
+    if (!resendApiKey) {
+      console.warn("RESEND_API_KEY not configured - email stored but not forwarded");
+    } else {
+      console.log(`Forwarding email to: ${bccAccount.forward_to_email}`);
+      
       try {
-        const resendResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${resendApiKey}`,
-          },
-          body: JSON.stringify({
-            from: `BCC Mail <noreply@bcc.cash>`,
-            to: [bccAccount.forward_to_email],
-            subject: `[BCC] ${emailData.subject || "(No Subject)"}`,
-            html: emailData.html || `<pre>${emailData.text || ""}</pre>`,
-            text: emailData.text,
-            reply_to: fromEmail,
-          }),
-        });
+        // Try with bcc.cash domain first, fallback to resend.dev if not verified
+        const fromAddresses = [
+          `${bccUsername}@bcc.cash`,
+          `BCC Mail <onboarding@resend.dev>`, // Fallback for unverified domains
+        ];
+        
+        let forwardSuccess = false;
+        let lastError = "";
+        
+        for (const fromAddr of fromAddresses) {
+          const resendResponse = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${resendApiKey}`,
+            },
+            body: JSON.stringify({
+              from: fromAddr,
+              to: [bccAccount.forward_to_email],
+              subject: `[Forwarded to ${bccUsername}@bcc.cash] ${emailData.subject || "(No Subject)"}`,
+              html: `
+                <div style="border-left: 3px solid #8b5cf6; padding-left: 16px; margin-bottom: 20px; color: #666;">
+                  <p><strong>Original sender:</strong> ${fromName ? `${fromName} &lt;${fromEmail}&gt;` : fromEmail}</p>
+                  <p><strong>To:</strong> ${bccUsername}@bcc.cash</p>
+                  <p><strong>Subject:</strong> ${emailData.subject || "(No Subject)"}</p>
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                ${emailData.html || `<pre style="white-space: pre-wrap;">${emailData.text || ""}</pre>`}
+              `,
+              text: `--- Forwarded from ${bccUsername}@bcc.cash ---\nFrom: ${fromEmail}\nSubject: ${emailData.subject || "(No Subject)"}\n\n${emailData.text || ""}`,
+              reply_to: fromEmail,
+            }),
+          });
 
-        if (resendResponse.ok) {
-          // Mark as forwarded
-          await supabase
-            .from("bcc_emails")
-            .update({ is_forwarded: true, forwarded_at: new Date().toISOString() })
-            .eq("id", email.id);
-          console.log("Email forwarded successfully");
-        } else {
-          console.error("Resend API error:", await resendResponse.text());
+          if (resendResponse.ok) {
+            // Mark as forwarded
+            await supabase
+              .from("bcc_emails")
+              .update({ is_forwarded: true, forwarded_at: new Date().toISOString() })
+              .eq("id", email.id);
+            console.log(`Email forwarded successfully using: ${fromAddr}`);
+            forwardSuccess = true;
+            break;
+          } else {
+            lastError = await resendResponse.text();
+            console.warn(`Failed with ${fromAddr}: ${lastError}`);
+          }
+        }
+        
+        if (!forwardSuccess) {
+          console.error("All forwarding attempts failed. Last error:", lastError);
         }
       } catch (forwardError) {
         console.error("Error forwarding email:", forwardError);
