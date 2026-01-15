@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/svix@1.15.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,39 @@ interface ResendInboundPayload {
   };
 }
 
+// Verify Svix webhook signature
+async function verifyWebhook(req: Request, body: string): Promise<boolean> {
+  const webhookSecret = Deno.env.get("RESEND_WEBHOOK_SECRET");
+  
+  if (!webhookSecret) {
+    console.warn("RESEND_WEBHOOK_SECRET not configured - skipping signature verification");
+    return true; // Allow if secret not configured (for testing)
+  }
+
+  const svixId = req.headers.get("svix-id");
+  const svixTimestamp = req.headers.get("svix-timestamp");
+  const svixSignature = req.headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    console.error("Missing Svix headers");
+    return false;
+  }
+
+  try {
+    const wh = new Webhook(webhookSecret);
+    wh.verify(body, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
+    });
+    console.log("Webhook signature verified successfully");
+    return true;
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return false;
+  }
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -27,7 +61,19 @@ serve(async (req: Request) => {
   }
 
   try {
-    const payload: ResendInboundPayload = await req.json();
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    
+    // Verify webhook signature
+    const isValid = await verifyWebhook(req, rawBody);
+    if (!isValid) {
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook signature" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const payload: ResendInboundPayload = JSON.parse(rawBody);
     
     console.log("Received webhook:", JSON.stringify(payload, null, 2));
 
