@@ -27,7 +27,7 @@ export const ShowcaseWalletCard = () => {
       >
         {/* The Wallet Card */}
         <div
-          className="relative w-full max-w-[500px] mx-auto aspect-video rounded-2xl overflow-hidden shadow-2xl"
+          className="relative w-full max-w-[600px] mx-auto aspect-video rounded-2xl overflow-hidden shadow-2xl"
           style={{
             backgroundImage: `url(${cardBg2})`,
             backgroundSize: "cover",
