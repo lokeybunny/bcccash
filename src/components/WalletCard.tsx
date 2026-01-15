@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-import { Download, Image, RefreshCw, X, Sparkles } from "lucide-react";
+import { Download, Image, RefreshCw, X, Sparkles, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -353,8 +353,8 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
             </div>
           </div>
 
-          {/* Download Button */}
-          <div className="flex justify-center">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Button
               onClick={downloadCard}
               disabled={isGenerating}
@@ -373,10 +373,32 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                 </>
               )}
             </Button>
+            
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2 bg-black hover:bg-black/90 text-white border-black"
+              onClick={() => {
+                const tweetText = encodeURIComponent(
+                  `🚀 Just created my Solana wallet with @BCCcash!\n\n` +
+                  `Turn any email into a Solana wallet instantly.\n\n` +
+                  `🔗 bcccash.cash\n\n` +
+                  `#Solana #Crypto #Web3 #BCCcash`
+                );
+                window.open(
+                  `https://twitter.com/intent/tweet?text=${tweetText}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }}
+            >
+              <Twitter className="w-4 h-4" />
+              Share on X
+            </Button>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            Share your wallet card on X to help others discover BCC! 🚀
+            Download your card, then attach it to your post on X! 🚀
           </p>
         </div>
       </DialogContent>
