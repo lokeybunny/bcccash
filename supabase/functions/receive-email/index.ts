@@ -3,17 +3,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, svix-id, svix-timestamp, svix-signature",
 };
 
-// Webhook from email provider (Resend inbound)
-interface InboundEmailPayload {
-  from: string;
-  from_name?: string;
-  to: string;
-  subject: string;
-  text?: string;
-  html?: string;
+// Resend inbound webhook payload structure
+interface ResendInboundPayload {
+  type: string;
+  created_at: string;
+  data: {
+    from: string;
+    to: string[];
+    subject: string;
+    text?: string;
+    html?: string;
+    headers: Array<{ name: string; value: string }>;
+  };
 }
 
 serve(async (req: Request) => {
@@ -23,18 +27,44 @@ serve(async (req: Request) => {
   }
 
   try {
-    const payload: InboundEmailPayload = await req.json();
+    const payload: ResendInboundPayload = await req.json();
+    
+    console.log("Received webhook:", JSON.stringify(payload, null, 2));
 
-    // Extract username from to address (username@bcc.cash)
-    const toMatch = payload.to.match(/^([a-z0-9]+)@bcc\.cash$/i);
+    // Validate it's an inbound email event
+    if (payload.type !== "email.received") {
+      return new Response(
+        JSON.stringify({ message: "Ignored non-inbound event" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const emailData = payload.data;
+    
+    // Find the @bcc.cash recipient
+    const bccRecipient = emailData.to.find((addr) => addr.toLowerCase().includes("@bcc.cash"));
+    if (!bccRecipient) {
+      return new Response(
+        JSON.stringify({ error: "No @bcc.cash recipient found" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Extract username from recipient (username@bcc.cash)
+    const toMatch = bccRecipient.match(/<?([a-z0-9]+)@bcc\.cash>?/i);
     if (!toMatch) {
       return new Response(
-        JSON.stringify({ error: "Invalid recipient address" }),
+        JSON.stringify({ error: "Invalid recipient address format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const bccUsername = toMatch[1].toLowerCase();
+    
+    // Extract sender name from "Name <email>" format
+    const fromMatch = emailData.from.match(/^(?:"?([^"<]+)"?\s*)?<?([^>]+)>?$/);
+    const fromName = fromMatch?.[1]?.trim() || null;
+    const fromEmail = fromMatch?.[2]?.trim() || emailData.from;
 
     // Initialize Supabase admin client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -68,11 +98,11 @@ serve(async (req: Request) => {
       .from("bcc_emails")
       .insert({
         bcc_account_id: bccAccount.id,
-        from_email: payload.from,
-        from_name: payload.from_name,
-        subject: payload.subject,
-        body_text: payload.text,
-        body_html: payload.html,
+        from_email: fromEmail,
+        from_name: fromName,
+        subject: emailData.subject,
+        body_text: emailData.text,
+        body_html: emailData.html,
       })
       .select()
       .single();
@@ -96,12 +126,12 @@ serve(async (req: Request) => {
             "Authorization": `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: `${bccUsername}@bcc.cash`,
+            from: `BCC Mail <noreply@bcc.cash>`,
             to: [bccAccount.forward_to_email],
-            subject: `[BCC] ${payload.subject || "(No Subject)"}`,
-            html: payload.html || `<pre>${payload.text || ""}</pre>`,
-            text: payload.text,
-            reply_to: payload.from,
+            subject: `[BCC] ${emailData.subject || "(No Subject)"}`,
+            html: emailData.html || `<pre>${emailData.text || ""}</pre>`,
+            text: emailData.text,
+            reply_to: fromEmail,
           }),
         });
 
@@ -111,12 +141,12 @@ serve(async (req: Request) => {
             .from("bcc_emails")
             .update({ is_forwarded: true, forwarded_at: new Date().toISOString() })
             .eq("id", email.id);
+          console.log("Email forwarded successfully");
         } else {
           console.error("Resend API error:", await resendResponse.text());
         }
       } catch (forwardError) {
         console.error("Error forwarding email:", forwardError);
-        // Don't fail the request - email is stored, just not forwarded
       }
     }
 
