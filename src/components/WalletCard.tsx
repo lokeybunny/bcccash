@@ -61,7 +61,6 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const truncatedEmail = email.length > 30 ? `${email.slice(0, 27)}...` : email;
-  const truncatedKey = `${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`;
 
   const handleCustomBgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -208,7 +207,7 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] opacity-60 uppercase tracking-wider">Powered by</p>
-                    <p className="text-xs font-semibold">bcccash.lovable.app</p>
+                    <p className="text-xs font-semibold">bcccash.cash</p>
                   </div>
                 </div>
 
@@ -248,8 +247,8 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
                       {truncatedEmail}
                     </p>
                     <p className="text-[10px] opacity-60 uppercase tracking-wider mt-2 mb-1">Public Key</p>
-                    <p className="font-mono text-xs" title={publicKey}>
-                      {truncatedKey}
+                    <p className="font-mono text-[8px] leading-tight break-all" title={publicKey}>
+                      {publicKey}
                     </p>
                   </div>
                 </div>
