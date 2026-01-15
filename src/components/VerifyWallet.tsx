@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getBackendClient } from "@/lib/backendClient";
 import { VerificationCertificate } from "./VerificationCertificate";
+import { WalletCard } from "./WalletCard";
 
 interface WalletResult {
   email: string;
@@ -215,19 +216,26 @@ export const VerifyWallet = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 space-y-3"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2 text-sm text-green-400">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Wallet found and verified</span>
               </div>
-              <VerificationCertificate
-                publicKey={result.publicKey}
-                email={result.email}
-                createdAt={result.createdAt}
-                confirmed={result.confirmed}
-                source={result.source}
-                searchedBy={result.searchedBy}
-              />
+              <div className="flex items-center gap-2">
+                <WalletCard 
+                  publicKey={result.publicKey} 
+                  email={result.email} 
+                  source={result.source || undefined}
+                />
+                <VerificationCertificate
+                  publicKey={result.publicKey}
+                  email={result.email}
+                  createdAt={result.createdAt}
+                  confirmed={result.confirmed}
+                  source={result.source}
+                  searchedBy={result.searchedBy}
+                />
+              </div>
             </div>
             
             <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
