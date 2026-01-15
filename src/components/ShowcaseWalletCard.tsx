@@ -16,6 +16,10 @@ export const ShowcaseWalletCard = () => {
   // Motion values for mouse position
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  
+  // Spotlight position (percentage based for CSS)
+  const spotlightX = useMotionValue(50);
+  const spotlightY = useMotionValue(50);
 
   // Spring config for smooth animation
   const springConfig = { damping: 20, stiffness: 300 };
@@ -23,6 +27,10 @@ export const ShowcaseWalletCard = () => {
   // Transform mouse position to rotation values
   const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [15, -15]), springConfig);
   const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-15, 15]), springConfig);
+  
+  // Smooth spotlight position
+  const smoothSpotlightX = useSpring(spotlightX, { damping: 30, stiffness: 200 });
+  const smoothSpotlightY = useSpring(spotlightY, { damping: 30, stiffness: 200 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -37,12 +45,21 @@ export const ShowcaseWalletCard = () => {
     
     mouseX.set(normalizedX);
     mouseY.set(normalizedY);
+    
+    // Calculate spotlight position as percentage
+    const percentX = ((e.clientX - rect.left) / rect.width) * 100;
+    const percentY = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    spotlightX.set(percentX);
+    spotlightY.set(percentY);
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
     mouseX.set(0);
     mouseY.set(0);
+    spotlightX.set(50);
+    spotlightY.set(50);
   };
 
   return (
@@ -82,6 +99,18 @@ export const ShowcaseWalletCard = () => {
         >
           {/* Overlay for readability */}
           <div className="absolute inset-0 bg-black/20" />
+          
+          {/* Mouse-follow spotlight glow */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-20 opacity-0 transition-opacity duration-300"
+            style={{
+              opacity: isHovered ? 0.6 : 0,
+              background: useTransform(
+                [smoothSpotlightX, smoothSpotlightY],
+                ([x, y]) => `radial-gradient(circle 250px at ${x}% ${y}%, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.2) 40%, transparent 70%)`
+              ),
+            }}
+          />
           
           {/* Logo Watermark */}
           <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
