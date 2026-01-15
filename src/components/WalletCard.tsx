@@ -278,22 +278,22 @@ export const WalletCard = ({ publicKey, email, source }: WalletCardProps) => {
           </div>
 
           {/* Card Preview */}
-          <div className="flex justify-center">
+          <div className="flex justify-center overflow-x-auto">
             <div
               ref={cardRef}
-              className="relative w-[400px] h-[250px] rounded-2xl overflow-hidden shadow-2xl"
+              className="relative w-[500px] h-[280px] rounded-2xl overflow-hidden shadow-2xl flex-shrink-0"
               style={getBackgroundStyle()}
             >
               {/* Overlay for readability - lighter for branded images */}
               <div className={`absolute inset-0 ${selectedBg.type === "image" || customBgUrl ? "bg-black/20" : "bg-black/30"}`} />
               
-              {/* Logo Watermark */}
+              {/* Logo Watermark - same size as header logo */}
               {showWatermark && (
-                <div className="absolute top-3 left-3 z-10">
+                <div className="absolute top-2 left-2 z-10">
                   <img 
                     src={bccLogo} 
                     alt="BCC Cash" 
-                    className="w-12 h-12 rounded-lg shadow-lg"
+                    className="w-20 h-20 object-contain drop-shadow-lg"
                   />
                 </div>
               )}
