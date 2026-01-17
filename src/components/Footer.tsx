@@ -20,8 +20,7 @@ const socialLinks = [
   { icon: XIcon, href: "https://x.com/BCCcash", label: "X" },
 ];
 
-// Placeholder pump.fun Solana CA - replace with actual address
-const PUMP_CA = "BCCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const PUMP_CA = "TSmJHjN6xxtGJs6w8Po9TV4cmRQdwm8WeJRAEaApump";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
