@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import bccLogo from "@/assets/bcc-logo.png";
+
+const PUMP_CA = "TY6a48L2Vqpd1tCSPR2ENpSXEn4mysdhKNUgQzMpump";
 
 // X (Twitter) logo component
 const XIcon = ({ className }: { className?: string }) => (
@@ -19,6 +23,13 @@ const socialLinks = [
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [copied, setCopied] = useState(false);
+
+  const copyCA = async () => {
+    await navigator.clipboard.writeText(PUMP_CA);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <footer className="border-t border-border/50 bg-background/80 backdrop-blur-sm">
@@ -96,6 +107,23 @@ export const Footer = () => {
               Privacy Policy
             </Link>
           </div>
+          
+          {/* CA Address */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs text-muted-foreground">CA:</span>
+            <button
+              onClick={copyCA}
+              className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>{PUMP_CA.slice(0, 6)}...{PUMP_CA.slice(-4)}</span>
+              {copied ? (
+                <Check className="w-3 h-3 text-green-500" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+          
           <p className="text-sm text-muted-foreground">
             © {currentYear} BCC.cash. All rights reserved.
           </p>
